@@ -7,8 +7,8 @@ import TailorProfile from "./TailorProfile";
 function App() {
  //return <Signup/>;
  // return <Login/>;
-return <CustomerProfile/>;
-//return <TailorProfile/>;
+//return <CustomerProfile/>;
+return <TailorProfile/>;
 }
 
 export default App;
