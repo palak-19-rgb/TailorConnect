@@ -7,7 +7,7 @@ require("dotenv").config();
 const CustomerRouter = require("./routers/Customer");
 const TailorRouter = require("./routers/Tailor");
 const TailorCustomerRouter = require("./routers/TailorCustomer");
-var { connectToMongoDB } = require("./config/dbconnect");
+var { connectToMongoDB } = require("./config/dbConnect");
 const Message=require("./models/Messages")
 
 var app = express();
