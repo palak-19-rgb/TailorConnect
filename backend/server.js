@@ -102,7 +102,7 @@ app.get("/messages/:room", async (req, res) => {
 
 
 
-const PORT = process.env.PORT || 2007;
+const PORT = process.env.PORT || 1000;
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`server + socket running on ${PORT}`);
