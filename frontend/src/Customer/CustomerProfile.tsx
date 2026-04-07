@@ -1,7 +1,7 @@
 ///testing contibution
-import React, { useState, ChangeEvent, FormEvent } from "react";
-import axios from "axios";
-import bgVideo from "./assets/stitch.mp4";
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import API from "../api/api";
+
 
 interface CustomerProfile {
   name: string;
@@ -40,7 +40,9 @@ const CustomerProfileForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Errors>({});
-  const API_URL = "http://localhost:2007/Customer/CustomerDetails";
+ const [isEditing, setIsEditing] = useState(false);
+ const [isNewUser, setIsNewUser] = useState(false);
+
 
   const validate = (): boolean => {
     const newErrors: Errors = {};
@@ -136,12 +138,12 @@ const CustomerProfileForm: React.FC = () => {
       formData.append("country", profile.address?.country || "");
 
       if (profile.profilePic)
-        formData.append("profilepic", profile.profilePic);
+  formData.append("profilepic", profile.profilePic); 
 
-      await axios.post(API_URL, formData, {
+      await API.post("/Customer/CustomerDetails", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
+localStorage.setItem("email", profile.email || "");
       alert("Profile saved successfully!");
     } catch (err) {
       console.error("Error saving profile:", err);
@@ -149,42 +151,74 @@ const CustomerProfileForm: React.FC = () => {
     }
   };
 
+useEffect(() => {
+  const email = localStorage.getItem("email");
+  if (!email) return;
+
+  fetch(`http://localhost:2007/Customer/getByEmail/${email}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("API:", data);
+
+      if (data && data.email && data.name) {
+        // ✅ EXISTING USER
+        setProfile(prev => ({
+          ...prev,
+          ...data
+        }));
+
+        setIsEditing(false);
+        setIsNewUser(false);
+      } else {
+        // 🆕 NEW USER
+        setIsEditing(true);
+        setIsNewUser(true);
+      }
+    })
+    .catch(err => console.log(err));
+}, []);
+
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-serif bg-[#f8f1df]">
+  <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-serif bg-[#f8f1df]">
 
-      <div className="absolute inset-0 bg-gradient-to-br from-[#fdf6e8] via-[#f3e2b8] to-[#e0b96a]"></div>
+    {/* BG */}
+    <div className="absolute inset-0 bg-gradient-to-br from-[#fdf6e8] via-[#f3e2b8] to-[#e0b96a]"></div>
 
-      <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] bg-[#ffd700] opacity-20 blur-[180px] rounded-full"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#b8860b] opacity-20 blur-[160px] rounded-full"></div>
+    {/* soft glow (reduced harshness) */}
+    <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] bg-[#ffd700] opacity-10 blur-[180px] rounded-full"></div>
+    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#b8860b] opacity-10 blur-[160px] rounded-full"></div>
 
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -left-full top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 animate-[sweep_10s_linear_infinite]"></div>
-      </div>
+    {/* sweep effect (UNCHANGED) */}
+    <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute -left-full top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 animate-[sweep_10s_linear_infinite]"></div>
+    </div>
 
-      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle,_#b8860b_1px,_transparent_1px)] bg-[size:40px_40px]"></div>
+    {/* texture */}
+    <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle,_#b8860b_1px,_transparent_1px)] bg-[size:40px_40px]"></div>
 
-      <div className="relative z-10 w-full max-w-4xl p-10 rounded-3xl bg-white/70 backdrop-blur-2xl border border-[#e7c977]/60 shadow-[0_60px_150px_rgba(180,130,40,0.35)] hover:shadow-[0_80px_200px_rgba(180,130,40,0.45)] transition-all duration-700">
+    {/* CARD */}
+    <div className="relative z-10 w-full max-w-4xl p-10 rounded-3xl bg-white/70 backdrop-blur-2xl border border-[#e7c977]/60 shadow-[0_60px_150px_rgba(180,130,40,0.35)] hover:shadow-[0_80px_200px_rgba(180,130,40,0.45)] transition-all duration-700">
 
-        {/* ✅ ONLY ONE HEADING NOW */}
-        <h2 className="relative text-4xl text-center text-[#b8860b] tracking-wide mb-3 overflow-hidden">
-          <span className="relative z-10">Royal Client Atelier</span>
-          <span className="absolute left-0 bottom-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent animate-pulse"></span>
-        </h2>
+      {/* HEADING */}
+      <h2 className="relative text-4xl text-center text-[#b8860b] tracking-wide mb-3 overflow-hidden">
+        <span className="relative z-10">Royal Client Atelier</span>
+        <span className="absolute left-0 bottom-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#d4b25f] to-transparent animate-pulse"></span>
+      </h2>
 
-        <p className="text-center text-sm tracking-[4px] uppercase text-[#d4a017] mb-8">
-          Bespoke Profile Registration
-        </p>
+      <p className="text-center text-sm tracking-[4px] uppercase text-[#b8963f] mb-8">
+        Bespoke Profile Registration
+      </p>
 
       <form onSubmit={handleSubmit} className="relative space-y-8">
 
-        {/* PHOTO + NAME SECTION */}
+        {/* PHOTO + NAME */}
         <div className="flex flex-col md:flex-row items-center gap-8 border-b border-[#e7c977] pb-8">
 
-          {/* Profile Image */}
           <label className="cursor-pointer relative">
             <div className="w-40 h-40 rounded-full border-4 border-[#b8860b] bg-[#fff8e6] flex items-center justify-center overflow-hidden shadow-[0_10px_40px_rgba(184,134,11,0.3)] hover:scale-105 transition-all duration-500 relative">
 
-              <div className="absolute inset-2 rounded-full border border-[#ffd700] opacity-60 pointer-events-none" />
+              <div className="absolute inset-2 rounded-full border border-[#d4b25f] opacity-60 pointer-events-none" />
 
               {profile.profilePic ? (
                 <img
@@ -203,20 +237,21 @@ const CustomerProfileForm: React.FC = () => {
               type="file"
               accept="image/*"
               onChange={handleFileChange}
+               disabled={!isEditing}
               className="hidden"
             />
           </label>
 
-          {/* Name Input */}
           <div className="flex-1 w-full">
             <input
               type="text"
+               disabled={!isEditing}
               placeholder="Full Name"
               value={profile.name}
               onChange={(e) =>
                 setProfile({ ...profile, name: e.target.value })
               }
-              className="w-full bg-white border border-[#e7c977] px-6 py-4 rounded-lg text-[#5a4630] text-lg focus:outline-none focus:border-[#b8860b] shadow-sm"
+              className="w-full bg-white border border-[#e7c977] px-6 py-4 rounded-lg text-[#5a4630] text-lg focus:outline-none focus:border-[#b8963f] shadow-sm"
             />
             {errors.name && (
               <p className="text-red-600 text-sm mt-2">{errors.name}</p>
@@ -244,6 +279,7 @@ const CustomerProfileForm: React.FC = () => {
             <input
               type="date"
               value={profile.dob || ""}
+               disabled={!isEditing}
               onChange={(e) =>
                 setProfile({ ...profile, dob: e.target.value })
               }
@@ -262,6 +298,7 @@ const CustomerProfileForm: React.FC = () => {
               type="tel"
               placeholder="Phone Number"
               value={profile.phone}
+               disabled={!isEditing}
               onChange={(e) =>
                 setProfile({ ...profile, phone: e.target.value })
               }
@@ -277,6 +314,7 @@ const CustomerProfileForm: React.FC = () => {
               type="email"
               placeholder="Email Address"
               value={profile.email || ""}
+               disabled={!isEditing}
               onChange={(e) =>
                 setProfile({ ...profile, email: e.target.value })
               }
@@ -288,7 +326,7 @@ const CustomerProfileForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Address Section (UNCHANGED) */}
+        {/* ADDRESS */}
         <div className="p-6 rounded-xl bg-[#fff8e6] border border-[#e9c987]">
           <h3 className="text-sm uppercase tracking-[3px] text-[#b8860b] mb-4">
             Residence Details
@@ -300,6 +338,7 @@ const CustomerProfileForm: React.FC = () => {
               type="text"
               placeholder="Street Address"
               value={profile.address?.street || ""}
+               disabled={!isEditing}
               onChange={(e) =>
                 setProfile({
                   ...profile,
@@ -313,6 +352,7 @@ const CustomerProfileForm: React.FC = () => {
               type="text"
               placeholder="Pincode"
               value={profile.address?.pincode || ""}
+               disabled={!isEditing}
               onChange={handlePincodeChange}
               className="bg-white border border-[#e7c977] px-4 py-3 rounded-lg text-[#5a4630]"
             />
@@ -327,6 +367,7 @@ const CustomerProfileForm: React.FC = () => {
               type="text"
               placeholder="City"
               value={profile.address?.city || ""}
+               disabled={!isEditing}
               readOnly
               className="bg-[#f5ede3] border border-[#e7c977] px-4 py-3 rounded-lg text-[#5a4630]"
             />
@@ -335,6 +376,7 @@ const CustomerProfileForm: React.FC = () => {
               type="text"
               placeholder="State"
               value={profile.address?.state || ""}
+               disabled={!isEditing}
               readOnly
               className="bg-[#f5ede3] border border-[#e7c977] px-4 py-3 rounded-lg text-[#5a4630]"
             />
@@ -343,6 +385,7 @@ const CustomerProfileForm: React.FC = () => {
               type="text"
               placeholder="Country"
               value={profile.address?.country || ""}
+               disabled={!isEditing}
               onChange={(e) =>
                 setProfile({
                   ...profile,
@@ -354,17 +397,34 @@ const CustomerProfileForm: React.FC = () => {
           </div>
         </div>
 
-        {/* SAVE BUTTON - Tailor Style Hover */}
-        <button
-          type="submit"
-          className="w-full py-4 rounded-lg bg-gradient-to-r from-[#b8860b] via-[#ffd700] to-[#b8860b] text-white tracking-[3px] font-semibold relative overflow-hidden group transition-all duration-500"
-        >
-          <span className="relative z-10">SAVE PROFILE</span>
+        {/* BUTTON LOGIC */}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-[#ffd700] via-[#fff2b2] to-[#ffd700] opacity-0 group-hover:opacity-100 transition-all duration-700 blur-xl"></div>
-
-          <div className="absolute -left-full top-0 h-full w-1/2 bg-white/30 skew-x-12 group-hover:left-full transition-all duration-1000"></div>
-        </button>
+{isNewUser ? (
+  // 🆕 NEW USER → DIRECT SAVE
+  <button
+    type="submit"
+    className="w-full py-4 rounded-lg bg-gradient-to-r from-[#b8963f] via-[#d4b25f] to-[#b8963f] text-white"
+  >
+    SAVE PROFILE
+  </button>
+) : !isEditing ? (
+  // 👤 EXISTING USER → UPDATE BUTTON
+  <button
+    type="button"
+    onClick={() => setIsEditing(true)}
+    className="w-full py-4 rounded-lg border border-[#b8963f] text-[#b8963f]"
+  >
+    UPDATE PROFILE
+  </button>
+) : (
+  // ✏️ EDIT MODE → SAVE
+  <button
+    type="submit"
+    className="w-full py-4 rounded-lg bg-gradient-to-r from-[#b8963f] via-[#d4b25f] to-[#b8963f] text-white"
+  >
+    SAVE PROFILE
+  </button>
+)}
 
       </form>
     </div>

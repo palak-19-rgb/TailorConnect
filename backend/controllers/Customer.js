@@ -20,24 +20,25 @@ function Signup(req, resp) {
         });
 }
 
-function Login(req, resp) {
-    let { email, pwd } = req.body;
+async function getCustomerByEmail(req, res) {
+  try {
+    const { email } = req.params;
 
-    UseColRef.findOne({ email: email })
-        .then((user) => {
-            if (!user)
-                return resp.status(401).json({ status: false, msg: "User not found" });
+    const user = await UseColRef.findOne({ email });
 
-            if (pwd === user.pwd) {
-                resp.status(200).json({ status: true, msg: "Login successful", user: user });
-            } else {
-                resp.status(401).json({ status: false, msg: "Invalid password" });
-            }
-        })
-        .catch((err) => {
-            resp.status(500).json({ status: false, msg: err.message });
-        });
+    if (!user) {
+      return res.status(404).json({ msg: "Customer not found" });
+    }
+
+    res.json(user);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
+
+
+
 
 async function CustomerDetails(req, resp) {
     try {
@@ -63,25 +64,30 @@ async function CustomerDetails(req, resp) {
         }
 
         // ✅ CREATE OBJECT MANUALLY (same schema names)
-        let CustColRef = new UseColRef({
-            name: req.body.name,
-            gender: req.body.gender,
-            dob: req.body.dob,
-            phone: req.body.phone,
-            email: req.body.email,
-            picurl: imageUrl,
+ let updateData = {
+  name: req.body.name,
+  gender: req.body.gender,
+  dob: req.body.dob,
+  phone: req.body.phone,
+  address: {
+    street: req.body.street,
+    city: req.body.city,
+    state: req.body.state,
+    pincode: req.body.pincode,
+    country: req.body.country
+  }
+};
 
-            address: {
-                street: req.body.street,
-                city: req.body.city,
-                state: req.body.state,
-                pincode: req.body.pincode,
-                country: req.body.country
-            }
-        });
+// ✅ sirf tabhi pic update hogi jab new image aaye
+if (imageUrl) {
+  updateData.picurl = imageUrl;
+}
 
-        let doc = await CustColRef.save();
-
+let doc = await UseColRef.findOneAndUpdate(
+  { email: req.body.email },
+  updateData,
+  { new: true }
+);
         console.log("Saved in MongoDB:", doc);
 
         resp.status(200).json({
@@ -96,10 +102,103 @@ async function CustomerDetails(req, resp) {
     }
 }
 
+
+
+async function checkCustomer(req, res) {
+  try {
+   const { email } = req.params;
+const customer = await UseColRef.findOne({ email });
+    if (!user) {
+      return res.json({ exists: false });
+    }
+
+    res.json({
+      exists: true,
+      customer: user
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+async function getSavedTailors(req, res) {
+  try {
+    const { email } = req.params;
+
+    const customer = await UseColRef.findOne({ email })
+      .populate({
+        path: "savedTailors",
+        model: "Tailor"
+      });
+
+    console.log("POPULATED:", customer?.savedTailors);
+
+    if (!customer) return res.json([]);
+
+    res.json(customer.savedTailors);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+const Customer = require("../models/Customer");
+
+async function saveTailor(req, res) {
+  try {
+const { email, tailorId } = req.body;
+const customer = await UseColRef.findOne({ email });
+
+    if (!customer) {
+      return res.status(404).json({ msg: "Customer not found" });
+    }
+
+    // 👇 duplicate save na ho
+   if (!customer.savedTailors.some(id => id.toString() === tailorId)) {
+  customer.savedTailors.push(tailorId);
+  await customer.save();
+}
+
+    res.json({ success: true, msg: "Tailor saved" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+async function removeTailor(req, res) {
+  try {
+   const { email, tailorId } = req.body;
+const customer = await UseColRef.findOne({ email });
+
+    if (!customer) {
+      return res.status(404).json({ msg: "Customer not found" });
+    }
+
+    // ❌ remove logic
+    customer.savedTailors = customer.savedTailors.filter(
+      (id) => id.toString() !== tailorId
+    );
+
+    await customer.save();
+
+    res.json({ success: true, msg: "Removed" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+
 cloudinary.config({
     cloud_name: 'dstzxbqkc',
     api_key: '545895537255412',
     api_secret: '39NRt4cclzYfhcuY8YAItXTwxkU'
 });
 
-module.exports = { Signup, Login, CustomerDetails };
+module.exports = { Signup,getCustomerByEmail, CustomerDetails,checkCustomer,getSavedTailors,saveTailor,removeTailor };

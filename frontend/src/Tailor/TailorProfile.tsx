@@ -65,7 +65,8 @@ const TailorProfile: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<any>({});
   const [loadingLocation, setLoadingLocation] = useState(false);
-
+const [isEditing, setIsEditing] = useState(false);
+const [isNewUser, setIsNewUser] = useState(false);
 
   const handleChange = (
   e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -163,6 +164,42 @@ const TailorProfile: React.FC = () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [profile.pincode]);
+
+
+
+
+
+useEffect(() => {
+  const email = localStorage.getItem("email");
+  if (!email) return;
+
+  fetch(`http://localhost:2007/Tailor/getByEmail/${email}`)
+    .then(res => res.json())
+   .then(data => {
+  console.log("API DATA:", data); // DEBUG
+
+if (data && data.shopName) {
+  // EXISTING PROFILE
+  setProfile(prev => ({
+    ...prev,
+    ...data
+  }));
+
+  if (data.profilePhoto) {
+    setPreview(data.profilePhoto);
+  }
+
+  setIsEditing(false);
+  setIsNewUser(false);
+
+} else {
+  // NEW PROFILE (profile not filled yet)
+  setIsEditing(true);
+  setIsNewUser(true);
+}
+})
+    .catch(err => console.log(err));
+}, []);
 
   /* ---------------- STEP VALIDATION ---------------- */
   const validateStep = () => {
@@ -318,6 +355,7 @@ const TailorProfile: React.FC = () => {
                         name={field.name}
                         value={(profile as any)[field.name] || ""}
                         onChange={handleChange}
+                          disabled={!isEditing} 
                         className={inputStyle}
                       />
                       {errors[field.name] && (
@@ -336,6 +374,7 @@ const TailorProfile: React.FC = () => {
       name="workType"
       value={profile.workType}
       onChange={handleChange}
+        disabled={!isEditing} 
       className={inputStyle}
     >
       <option value="">Select</option>
@@ -364,6 +403,7 @@ const TailorProfile: React.FC = () => {
                     placeholder="Private Atelier Residence Details"
                     value={profile.personalAddress}
                     onChange={handleChange}
+                      disabled={!isEditing} 
                     className={inputStyle}
                   />
                 )}
@@ -381,6 +421,7 @@ const TailorProfile: React.FC = () => {
     placeholder="Nearby Landmark"
     value={profile.landmark}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -389,6 +430,7 @@ const TailorProfile: React.FC = () => {
     placeholder="Floor / Unit Number"
     value={profile.floorNumber}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -397,6 +439,7 @@ const TailorProfile: React.FC = () => {
     placeholder="Locality / Area"
     value={profile.area}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -405,6 +448,7 @@ const TailorProfile: React.FC = () => {
     placeholder="Working Hours"
     value={profile.shopTimings}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -413,6 +457,7 @@ const TailorProfile: React.FC = () => {
     placeholder="City"
     value={profile.city}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -421,6 +466,7 @@ const TailorProfile: React.FC = () => {
     placeholder="State"
     value={profile.state}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -429,6 +475,7 @@ const TailorProfile: React.FC = () => {
     placeholder="Pincode"
     value={profile.pincode}
     onChange={handleChange}
+      disabled={!isEditing} 
     className={inputStyle}
   />
 
@@ -440,6 +487,7 @@ const TailorProfile: React.FC = () => {
   placeholder="Complete Street Address"
   value={profile.shopAddress}
   onChange={handleChange}
+    disabled={!isEditing} 
   className={inputStyle}
 />
                   </div>
@@ -455,6 +503,7 @@ const TailorProfile: React.FC = () => {
                   placeholder="Aadhaar Number"
                   value={profile.aadhaarNumber}
                   onChange={handleChange}
+                    disabled={!isEditing} 
                   className={inputStyle}
                 />
                 {errors.aadhaarNumber && (
@@ -467,40 +516,57 @@ const TailorProfile: React.FC = () => {
                   type="file"
                   name="aadhaarPhoto"
                   onChange={handleFileUpload}
+                    disabled={!isEditing} 
                 />
               </>
             )}
 
             {/* BUTTONS */}
-            <div className="flex justify-between mt-8">
-              {step > 1 && (
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="px-6 py-2 rounded-lg border border-[#b8860b] text-[#b8860b]"
-                >
-                  Previous
-                </button>
-              )}
+          
+              
 
-              {step < 3 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="ml-auto px-6 py-2 rounded-lg bg-[#b8860b] text-white"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  className="ml-auto px-8 py-2 rounded-lg bg-[#b8860b] text-white"
-                >
-                  SAVE ATELIER PROFILE
-                </button>
-              )}
-            </div>
+  <div className="flex justify-between mt-8">
 
+  {step > 1 && (
+    <button
+      type="button"
+      onClick={prevStep}
+      className="px-6 py-2 rounded-lg border border-[#b8860b] text-[#b8860b]"
+    >
+      Previous
+    </button>
+  )}
+
+  {step < 3 && (
+    <button
+      type="button"
+      onClick={nextStep}
+      className="ml-auto px-6 py-2 rounded-lg bg-[#b8860b] text-white"
+    >
+      Next
+    </button>
+  )}
+
+ {step === 3 && !isNewUser && !isEditing && (
+  <button
+    type="button"
+    onClick={() => setIsEditing(true)}
+    className="ml-auto px-6 py-2 rounded-lg border border-[#b8860b] text-[#b8860b]"
+  >
+    UPDATE ATELIER PROFILE
+  </button>
+)}
+
+{step === 3 && (isEditing || isNewUser) && (
+  <button
+    type="submit"
+    className="ml-auto px-8 py-2 rounded-lg bg-[#b8860b] text-white"
+  >
+    SAVE ATELIER PROFILE
+  </button>
+)}
+
+</div>
           </form>
         </div>
 
@@ -527,6 +593,7 @@ const TailorProfile: React.FC = () => {
               hidden
               accept="image/*"
               onChange={handleFileUpload}
+                disabled={!isEditing} 
             />
           </label>
 

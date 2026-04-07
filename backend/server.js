@@ -1,35 +1,116 @@
 var express = require("express");
 var fileuploader = require("express-fileupload");
 var cors = require("cors");
+var path = require("path");
+require("dotenv").config();
+
 const CustomerRouter = require("./routers/Customer");
 const TailorRouter = require("./routers/Tailor");
+const TailorCustomerRouter = require("./routers/TailorCustomer");
 var { connectToMongoDB } = require("./config/dbconnect");
+const Message=require("./models/Messages")
 
 var app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(fileuploader());
-
+// ✅ CORS first
 app.use(cors({
   origin: "http://localhost:5173",
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
 
-// routers
-app.use("/Customer", CustomerRouter);
+// ✅ body parser SECOND
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(fileuploader());
+
+// ✅ static
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ✅ routes AFTER middleware
+app.use("/TailorCustomer", TailorCustomerRouter);
+console.log("CustomerRouter:", CustomerRouter);
+
+app.use("/customer", CustomerRouter);
+
+console.log("Customer route mounted");
 app.use("/Tailor", TailorRouter);
-app.use("/user", CustomerRouter); 
-app.use("/user", TailorRouter); 
+
+
+const tailorController = require("./controllers/Tailor");
+app.post("/Login", tailorController.Login);
 
 connectToMongoDB();
+const http = require("http");
+const { Server } = require("socket.io");
 
-app.listen(2007, () => {
-  console.log("server started on 2007");
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
 });
 
+// ⭐ GLOBAL (future use ke liye)
+global.io = io;
+
+// 🔥 SOCKET LOGIC
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("joinRoom", (room) => {
+    socket.join(room);
+  });
+
+socket.on("sendMessage", async ({ room, message }) => {
+
+  const fixedRoom = room.trim().toLowerCase(); // ✅ FIX
+
+  await Message.create({
+    room: fixedRoom,
+    text: message.text,
+    sender: message.sender
+  });
+
+  io.to(fixedRoom).emit("receiveMessage", message);
+});
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
+
+app.get("/messages/:room", async (req, res) => {
+  try {
+    const room = req.params.room.trim().toLowerCase(); // ✅ FIX
+
+    const msgs = await Message.find({ room });
+
+    console.log("FETCH ROOM:", room);
+    console.log("FOUND:", msgs.length);
+
+    res.json(msgs);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "error" });
+  }
+});
+
+
+
+
+
+
+// ❗ IMPORTANT: app.listen hata ke ye use kar
+server.listen(2007, () => {
+  console.log("server + socket running on 2007");
+});
+// 404
 app.use((req, res) => {
   console.log(req.method, req.url);
   res.status(404).send("invalid url");
 });
+
+

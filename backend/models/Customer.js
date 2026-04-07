@@ -18,8 +18,10 @@ let colDesign = {
         state: String,
         pincode: String,
         country: String
-    }
-
+    },
+savedTailors: [
+  { type: mongoose.Schema.Types.ObjectId, ref: "Tailor" }
+]
 };
 let schemaOptions = { versionKey: false };
 let CustomerSchema = new mongoose.Schema(colDesign, schemaOptions);

@@ -1,7 +1,8 @@
 var path = require("path");
 var UseColRef = require("../models/Tailor");
 var cloudinary = require("cloudinary").v2;
-const Tesseract = require("tesseract.js");
+
+ Tesseract = require("tesseract.js");
 const crypto = require("crypto");//aadhaar hash krdo
 
 
@@ -27,25 +28,64 @@ function Signup(req, resp) {
 
 
 
-function Login(req, resp) {
-    let { email, pwd } = req.body;
 
-    UseColRef.findOne({ email: email })
-        .then((user) => {
-            if (!user) return resp.status(401).json({ status: false, msg: "User not found" });
+var TailorModel = require("../models/Tailor");
 
-         
-            if (pwd === user.pwd) {
-                resp.status(200).json({ status: true, msg: "Login successful", user: user });
-            } else {
-                resp.status(401).json({ status: false, msg: "Invalid password" });
-            }
-        })
-        .catch((err) => {
-            resp.status(500).json({ status: false, msg: err.message });
-        });
+async function getTailorByEmail(req, res) {
+  try {
+    const { email } = req.params;
+
+    const user = await TailorModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ msg: "Tailor not found" });
+    }
+
+    res.json(user);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
 
+
+
+
+const Customer = require("../models/Customer");
+const Tailor = require("../models/Tailor");
+
+async function Login(req, res) {
+  const { email, pwd } = req.body;
+
+  try {
+    // Customer check
+    let user = await Customer.findOne({ email });
+
+    if (user && user.pwd === pwd) {
+      return res.json({
+        status: true,
+        user,
+        role: "Customer"
+      });
+    }
+
+    // Tailor check
+    user = await Tailor.findOne({ email });
+
+    if (user && user.pwd === pwd) {
+      return res.json({
+        status: true,
+        user,
+        role: "Tailor"
+      });
+    }
+
+    res.status(401).json({ msg: "Invalid credentials" });
+
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+}
 
 async function TailorDetails(req, resp) {
     try {
@@ -79,36 +119,36 @@ async function TailorDetails(req, resp) {
             aadhaarUrl = result.secure_url;
         }
 
-        // ✅ Save Properly Structured Data
-        let CustColRef = new UseColRef({
-            email: req.body.email,
-            shopName: req.body.shopName,
-            ownerName: req.body.ownerName,
-            phone: req.body.phone,
-            gender: req.body.gender,
-            gst: req.body.gst,
-            experience: req.body.experience,
-            workType: req.body.workType,
-            socialLink: req.body.socialLink,
-            otherInfo: req.body.otherInfo,
-          aadhaarNumber: encrypt(req.body.aadhaarNumber),
+      let doc = await UseColRef.findOneAndUpdate(
+  { email: req.body.email },   // ⭐ SAME USER
+  {
+    shopName: req.body.shopName,
+    ownerName: req.body.ownerName,
+    phone: req.body.phone,
+    gender: req.body.gender,
+    gst: req.body.gst,
+    experience: req.body.experience,
+    workType: req.body.workType,
+    socialLink: req.body.socialLink,
+    otherInfo: req.body.otherInfo,
+    aadhaarNumber: encrypt(req.body.aadhaarNumber),
 
-            profilePhoto: profileUrl,
-            aadharCard: aadhaarUrl,   // if your schema uses this name
+    profilePhoto: profileUrl,
+    aadharCard: aadhaarUrl,
 
-            shopAddress: {
-                personalAddress: req.body.personalAddress,
-                landmark: req.body.landmark,
-                floorNumber: req.body.floorNumber,
-                area: req.body.area,
-                shopTimings: req.body.shopTimings,
-                city: req.body.city,
-                state: req.body.state,
-                pincode: req.body.pincode
-            }
-        });
-
-        let doc = await CustColRef.save();
+    shopAddress: {
+      personalAddress: req.body.personalAddress,
+      landmark: req.body.landmark,
+      floorNumber: req.body.floorNumber,
+      area: req.body.area,
+      shopTimings: req.body.shopTimings,
+      city: req.body.city,
+      state: req.body.state,
+      pincode: req.body.pincode
+    }
+  },
+  { new: true }
+);
 
         resp.status(200).json({
             status: true,
@@ -191,6 +231,294 @@ function encrypt(text) {
 
 
 
+// 🔥 GET Tailor By Mobile
+async function getTailorProfile(req, resp) {
+  try {
+    const { mobile } = req.params;
+
+    const tailor = await UseColRef.findOne({ phone: mobile });
+
+    if (!tailor) {
+      return resp.status(404).json({
+        status: false,
+        msg: "Tailor not found"
+      });
+    }
+
+    resp.status(200).json({
+      status: true,
+      name: tailor.shopName,
+      ownerName: tailor.ownerName,
+      phone: tailor.phone,
+      id: tailor._id
+    });
+
+  } catch (err) {
+    resp.status(500).json({
+      status: false,
+      msg: err.message
+    });
+  }
+}
+
+
+
+
+async function addReview(req, res) {
+
+  try {
+
+    const { mobile, rating, review } = req.body;
+
+    const tailor = await UseColRef.findOne({ phone: mobile });
+
+    if (!tailor)
+      return res.status(404).json({ msg: "Tailor not found" });
+
+    tailor.reviews.push({
+      customerName: "Customer",
+      rating: rating,
+      review: review
+    });
+
+    await tailor.save();
+
+    res.json({ status: true, msg: "Review Added" });
+
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+}
+
+
+// ================== GET REVIEWS ==================
+async function getReviews(req, res) {
+
+  try {
+
+    const { mobile } = req.params;
+    const tailor = await UseColRef.findOne({ phone: mobile });
+
+    if (!tailor)
+      return res.status(404).json({ msg: "Tailor not found" });
+
+    res.json(tailor.reviews || []);
+
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+}
+
+
+
+async function getTailors(req,res){
+
+try{
+
+const {city,experience,workType} = req.query
+
+let filter={}
+
+if(city){
+filter["shopAddress.city"] = { $regex: city, $options: "i" }
+}
+
+if(experience){
+filter.experience = { $gte: Number(experience) }
+}
+
+if(workType){
+filter.workType = workType
+}
+
+
+const tailors = await UseColRef.find(filter)
+
+// 👇 Important check
+if(tailors.length === 0){
+return res.json({message:"Tailor doesn't exist"})
+}
+
+res.json(tailors)
+
+}catch(err){
+res.status(500).json({error:err.message})
+}
+}
+
+
+// ================= PORTFOLIO =================
+
+// ADD PORTFOLIO IMAGE
+async function addPortfolio(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!req.files || !req.files.image) {
+      return res.json({ status: false, msg: "No image uploaded" });
+    }
+
+    let file = req.files.image;
+    let fileName = Date.now() + "_" + file.name;
+    let uploadPath = path.join(__dirname, "..", "uploads", fileName);
+
+    await file.mv(uploadPath);
+
+    let result = await cloudinary.uploader.upload(uploadPath);
+
+    const tailor = await UseColRef.findOne({ email });
+
+    if (!tailor) return res.json({ msg: "Tailor not found" });
+
+    if (!tailor.portfolio) tailor.portfolio = [];
+    if (!Array.isArray(tailor.portfolio)) {
+  tailor.portfolio = [];}
+
+    tailor.portfolio.push({
+  imageUrl: result.secure_url,
+  public_id: result.public_id,
+  tag: req.body.tag || "Bridal",
+  description: req.body.description || "",
+  createdAt: new Date()
+});
+
+    await tailor.save();
+
+    res.json({ status: true, msg: "Portfolio Added" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// GET PORTFOLIO
+async function getPortfolio(req, res) {
+  try {
+    const { email } = req.params;
+
+    const tailor = await UseColRef.findOne({ email });
+
+    if (!tailor) return res.json({ msg: "Tailor not found" });
+
+    res.json(tailor.portfolio || []);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// DELETE PORTFOLIO IMAGE
+async function deletePortfolio(req, res) {
+  try {
+    const { email, imageId } = req.body;
+
+    const tailor = await UseColRef.findOne({ email });
+
+    if (!tailor) {
+      return res.status(404).json({ msg: "Tailor not found" });
+    }
+
+ 
+    const img = tailor.portfolio.id(imageId);
+
+    if (!img) {
+      return res.status(404).json({ msg: "Image not found" });
+    }
+
+    // 🔥 CLOUDINARY DELETE
+    if (img.public_id) {
+      await cloudinary.uploader.destroy(img.public_id);
+    }
+
+    // 🔥 REMOVE FROM DB
+    img.deleteOne();
+
+    await tailor.save();
+
+    res.json({ status: true, msg: "Deleted successfully" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+async function updatePortfolio(req, res) {
+  try {
+    const { email, images } = req.body;   // ✅ yaha se aayega data
+
+    const tailor = await UseColRef.findOne({ email });
+
+    if (!tailor) {
+      return res.status(404).json({ msg: "Tailor not found" });
+    }
+
+    tailor.portfolio = images;
+
+    await tailor.save();
+
+    res.json({ status: true, msg: "Portfolio Updated" });
+
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+}
+
+
+
+async function updateSingleImage(req, res) {
+  try {
+    const { email, image } = req.body;
+
+    const tailor = await UseColRef.findOne({ email });
+
+    if (!tailor) {
+      return res.status(404).json({ msg: "Tailor not found" });
+    }
+
+    tailor.portfolio = tailor.portfolio.map((img) =>
+      img._id.toString() === image._id
+        ? { ...img._doc, ...image }
+        : img
+    );
+
+    await tailor.save();
+
+    res.json({ status: true, msg: "Image updated" });
+
+  } catch (err) {   // ✅ YE MISSING HOGA
+    res.status(500).json({ msg: err.message });
+  }
+}
+
+// 🔥 FULL PROFILE WITH PORTFOLIO + REVIEWS
+async function getFullTailorProfile(req, res) {
+  try {
+    const { id } = req.params;
+
+    const tailor = await UseColRef.findById(id);
+
+    if (!tailor) {
+      return res.status(404).json({
+        status: false,
+        msg: "Tailor not found"
+      });
+    }
+
+    res.json({
+      status: true,
+      data: tailor
+    });
+
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+}
+
+
+
+
 cloudinary.config({
     cloud_name: 'dstzxbqkc',
     api_key: '545895537255412',
@@ -198,7 +526,20 @@ cloudinary.config({
 });
 
 
-
-module.exports = { Signup, Login,TailorDetails,doExtractAadhaar };
-
-
+module.exports = {
+  Signup,
+  Login,
+  TailorDetails,
+  doExtractAadhaar,
+  getTailorProfile,
+  addReview,
+  getReviews,
+  getTailors,
+  addPortfolio,
+  getPortfolio,
+  deletePortfolio,  
+  updatePortfolio,
+  updateSingleImage,
+  getFullTailorProfile,
+  getTailorByEmail
+};

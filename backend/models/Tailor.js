@@ -19,7 +19,7 @@ let colDesign = {
   otherInfo: String,
 
   profilePhoto: String,
-  aadhaarNumber: String,   
+  aadhaarNumber: String,  
 
   shopAddress: {
     personalAddress: String,
@@ -30,7 +30,27 @@ let colDesign = {
     city: String,
     state: String,
     pincode: String,
+  },
+
+  reviews: [
+    {
+      customerName: String,
+      rating: Number,
+      review: String
+    }
+  ],
+
+  // 🧵 NEW PORTFOLIO FIELD
+  portfolio: [
+  {
+    imageUrl: String,
+    tag: String,
+    description: String,
+    featured: Boolean,
+    views: { type: Number, default: 0 },
+    public_id:String
   }
+]
 };
 
 var ver = { versionKey: false };
