@@ -28,7 +28,7 @@ export default function MyMeasurements() {
     const email = localStorage.getItem("email");
 
 const res = await fetch(
-  `http://localhost:2007/TailorCustomer/customer/${email}`
+  `https://tailorconnect-backend.onrender.com/TailorCustomer/customer/${email}`
 );
       if (!res.ok) {
         console.log("API error");

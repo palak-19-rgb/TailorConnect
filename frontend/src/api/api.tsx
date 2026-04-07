@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:2007",
+  baseURL: "https://tailorconnect-backend.onrender.com",
 });
 
 API.interceptors.request.use((req) => {

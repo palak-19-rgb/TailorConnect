@@ -156,7 +156,7 @@ useEffect(() => {
   const email = localStorage.getItem("email");
   if (!email) return;
 
-  fetch(`http://localhost:2007/Customer/getByEmail/${email}`)
+fetch(`https://tailorconnect-backend.onrender.com/Customer/getByEmail/${email}`)
     .then(res => res.json())
     .then(data => {
       console.log("API:", data);

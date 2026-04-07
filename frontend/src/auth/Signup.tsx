@@ -64,10 +64,12 @@ export default function Signup({ setShowLogin, setShowSignup }: any) {
     }
 
     try {
-      const url =
-        userType === "Customer"
-          ? "http://localhost:2007/Customer/Signup"
-          : "http://localhost:2007/Tailor/Signup";
+     const BASE_URL = "https://tailorconnect-backend.onrender.com";
+
+const url =
+  userType === "Customer"
+    ? `${BASE_URL}/Customer/Signup`
+    : `${BASE_URL}/Tailor/Signup`;
 
       await axios.post(url, {
         email,

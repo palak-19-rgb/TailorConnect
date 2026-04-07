@@ -14,7 +14,7 @@ export default function MyOrders() {
 if (!email) return;
 
 const res = await fetch(
-  `http://localhost:2007/TailorCustomer/customer/${email}`
+  `https://tailorconnect-backend.onrender.com/TailorCustomer/customer/${email}`
 );
     const data = await res.json();
 

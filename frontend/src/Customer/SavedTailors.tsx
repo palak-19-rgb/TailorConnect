@@ -28,7 +28,7 @@ export default function SavedTailors() {
 if (!email) return;
 
 const res = await fetch(
-  `http://localhost:2007/customer/saved/${email}`
+  `https://tailorconnect-backend.onrender.com/customer/saved/${email}`
 );
 
             const data = await res.json();
@@ -56,7 +56,7 @@ const res = await fetch(
            const email = localStorage.getItem("email");
 if (!email) return;
 
-await fetch("http://localhost:2007/customer/remove-tailor", {
+await fetch("https://tailorconnect-backend.onrender.com/customer/remove-tailor", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

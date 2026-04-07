@@ -13,7 +13,7 @@ export default function CompletedOrders() {
     if (!tailorId) return;
 
     const res = await fetch(
-      `http://localhost:2007/TailorCustomer/${tailorId}`
+      `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`
     );
 
     const data = await res.json();

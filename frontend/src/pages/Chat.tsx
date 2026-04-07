@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { useLocation } from "react-router-dom";
 import { useRef } from "react";
 
-const socket = io("http://localhost:2007");
+const socket = io("https://tailorconnect-backend.onrender.com");
 
 export default function Chat() {
   const [msg, setMsg] = useState("");
@@ -61,7 +61,7 @@ return () => {
       .join("_");
 
     const fetchMessages = async () => {
-      const res = await fetch(`http://localhost:2007/messages/${room}`);
+      const res = await fetch(`https://tailorconnect-backend.onrender.com/messages/${room}`);
       const data = await res.json();
 
       if (Array.isArray(data)) setMessages(data);

@@ -55,7 +55,7 @@ const filteredOrders = orders.filter(
 const fetchOrders = async () => {
 const tailorId = localStorage.getItem("tailorId");
   const res = await fetch(
-    `http://localhost:2007/TailorCustomer/${tailorId}`
+    `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`
   );
 
   const data = await res.json();
@@ -68,7 +68,7 @@ setOrders(Array.isArray(data) ? data : []);
 
 
 const updateStatus = async (id: string, newStatus: string) => {
-  await fetch("http://localhost:2007/TailorCustomer/update-status", {
+  await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/update-status", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -84,7 +84,7 @@ const deleteOrder = async (id: string) => {
   const confirmDelete = window.confirm("Delete this order?");
   if (!confirmDelete) return;
 
-  await fetch("http://localhost:2007/TailorCustomer/delete", {
+  await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

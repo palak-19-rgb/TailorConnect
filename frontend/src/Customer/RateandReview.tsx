@@ -18,7 +18,7 @@ const RateAndReview: React.FC = () => {
   const [average, setAverage] = useState<number>(0);
   const [animatedAverage, setAnimatedAverage] = useState<number>(0);
 
-  const API_BASE = "http://localhost:2007";
+  const API_BASE = "https://tailorconnect-backend.onrender.com";
 
   /* ⭐ Animate Average */
   useEffect(() => {

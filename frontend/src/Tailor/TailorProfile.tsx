@@ -100,7 +100,7 @@ const [isNewUser, setIsNewUser] = useState(false);
 
       try {
         const res = await fetch(
-          "http://localhost:2007/Tailor/extract-aadhaar",
+          "https://tailorconnect-backend.onrender.com/Tailor/extract-aadhaar",
           {
             method: "POST",
             body: formData,
@@ -168,7 +168,7 @@ useEffect(() => {
   const email = localStorage.getItem("email");
   if (!email) return;
 
-  fetch(`http://localhost:2007/Tailor/getByEmail/${email}`)
+  fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`)
     .then(res => res.json())
    .then(data => {
   console.log("API DATA:", data); // DEBUG
@@ -263,7 +263,7 @@ if (data && data.shopName) {
   });
 
   try {
-    const res = await fetch("http://localhost:2007/Tailor/TailorDetails", {
+    const res = await fetch("https://tailorconnect-backend.onrender.com/Tailor/TailorDetails", {
   method: "POST",
   body: formData,
 });
