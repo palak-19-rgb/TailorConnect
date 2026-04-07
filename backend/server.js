@@ -14,7 +14,7 @@ var app = express();
 
 // ✅ CORS first
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
@@ -48,7 +48,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -102,10 +102,10 @@ app.get("/messages/:room", async (req, res) => {
 
 
 
+const PORT = process.env.PORT || 2007;
 
-// ❗ IMPORTANT: app.listen hata ke ye use kar
-server.listen(2007, () => {
-  console.log("server + socket running on 2007");
+server.listen(PORT, () => {
+  console.log(`server + socket running on ${PORT}`);
 });
 // 404
 app.use((req, res) => {
