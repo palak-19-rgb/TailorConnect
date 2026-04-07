@@ -41,7 +41,7 @@ const [selectedImg, setSelectedImg] = useState<string | null>(null);
 
 
   /* ================= CROP =================*/
-  const cropImage = (file) => {
+ const cropImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = URL.createObjectURL(file);
@@ -54,6 +54,7 @@ const [selectedImg, setSelectedImg] = useState<string | null>(null);
         canvas.height = size;
 
         const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
         ctx.drawImage(
           img,
@@ -74,7 +75,7 @@ const [selectedImg, setSelectedImg] = useState<string | null>(null);
 
 
 
-  const savePortfolio = async (data) => {
+const savePortfolio = async (data: ImageType[]) => {
     try {
       
 await API.post("/Tailor/update-portfolio", {
@@ -89,11 +90,12 @@ await API.post("/Tailor/update-portfolio", {
 
   // ================= UPLOAD =================
  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files);
+  const files = Array.from(e.target.files || []);
 
     for (let file of files) {
       const formData = new FormData();
-      formData.append("email", email);
+      if (!email) return;
+formData.append("email", email);
       formData.append("image", file);
       formData.append("tag", "Bridal");
       formData.append("description", "");
@@ -109,7 +111,7 @@ await API.post("/Tailor/update-portfolio", {
       ? images
       : images.filter((img: ImageType) => img.tag === filter);
 
-  const toggleFeatured = (id) => {
+  const toggleFeatured = (id:String) => {
     const updated = images.map(img =>
       img._id === id ? { ...img, featured: !img.featured } : img
     );
@@ -118,27 +120,27 @@ await API.post("/Tailor/update-portfolio", {
     savePortfolio(updated);
   };
 
-const openImage = (img) => {
+const openImage = (img: ImageType)  => {
   setSelectedImg(img.imageUrl);
 };
 
 
 
-  const changeDesc = (id, value) => {
+ const changeDesc = (id: string, value: string) => {
     const updated = images.map(img =>
       img._id === id ? { ...img, description: value } : img
     );
     setImages(updated);
   };
 
-  const changeTag = (id, tag) => {
+ const changeTag = (id: string, tag: string) => {
     const updated = images.map(img =>
       img._id === id ? { ...img, tag } : img
     );
     setImages(updated);
   };
 
-  const saveSingleImage = async (img) => {
+ const saveSingleImage = async (img: ImageType)  => {
 
     if (!img.description || img.description.trim().length < 5) {
       alert("Description must be at least 5 characters");
@@ -160,7 +162,7 @@ const openImage = (img) => {
     }
   };
 
-  const deleteImage = async (id) => {
+const deleteImage = async (id: string)  => {
     const confirmDelete = window.confirm("Do you want to delete this image?");
     if (!confirmDelete) return;
 

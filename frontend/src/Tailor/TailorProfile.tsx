@@ -1,10 +1,5 @@
-import React, {
-  useState,
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 
 interface TailorProfileData {
   shopName: string;
@@ -35,7 +30,7 @@ interface TailorProfileData {
 
 const TailorProfile: React.FC = () => {
   const [step, setStep] = useState(1);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [profile, setProfile] = useState<TailorProfileData>({
     shopName: "",

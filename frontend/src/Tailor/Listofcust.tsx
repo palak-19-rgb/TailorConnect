@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type Customer = {
   _id: string;
@@ -190,9 +190,9 @@ export default function Customers() {
   const saveMeasurements = async (id: string, measurements: any) => {
 
 
-    const hasEmpty = Object.values(measurements || {}).some(
-      val => !val || val.trim() === ""
-    );
+  const hasEmpty = Object.values(measurements || {}).some(
+  (val) => !val || (val as string).trim() === ""
+);
 
     if (hasEmpty) {
       alert("Please fill all measurements");
@@ -411,7 +411,7 @@ export default function Customers() {
       return;
     }
 
-    const other = c.email.trim().toLowerCase();
+  const other = (c.email as string).trim().toLowerCase();
 
     if (other === myEmail) {
       alert("❌ Cannot chat with yourself");

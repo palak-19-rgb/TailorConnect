@@ -46,7 +46,9 @@ const bottomRef = useRef<HTMLDivElement | null>(null);
   ]);
 });
 
-    return () => socket.off("receiveMessage");
+return () => {
+  socket.off("receiveMessage");
+};
   }, [otherUser]);
 
   // ✅ hook 3 (fetch)

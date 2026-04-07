@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import API from "../api/api";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function TailorMarketplace() {
 const navigate = useNavigate();
-const [tailors,setTailors] = useState<any[]>([])
+const [tailors, setTailors] = useState<any[]>([]);
 const [city,setCity] = useState("")
 const [workType,setWorkType] = useState("")
 const [experience,setExperience] = useState("")

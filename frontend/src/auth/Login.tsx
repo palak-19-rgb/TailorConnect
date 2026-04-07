@@ -1,7 +1,8 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import API from "../api/api"; 
 import { useNavigate } from "react-router-dom";
-import myPhoto from "../assets/myphoto.jpg";
+
 
 interface LoginData {
   email: string;
