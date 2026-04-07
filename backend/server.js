@@ -104,7 +104,7 @@ app.get("/messages/:room", async (req, res) => {
 
 const PORT = process.env.PORT || 2007;
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`server + socket running on ${PORT}`);
 });
 // 404
