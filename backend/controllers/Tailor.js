@@ -1,29 +1,39 @@
 var path = require("path");
 var UseColRef = require("../models/Tailor");
 var cloudinary = require("cloudinary").v2;
-
- Tesseract = require("tesseract.js");
+const Tesseract = require("tesseract.js");
 const crypto = require("crypto");//aadhaar hash krdo
 
 
-const SECRET_KEY = "mySuperSecretKey123"; 
 
-function Signup(req, resp) {
-    console.log(req.body);
 
-    let CustColRef = new UseColRef({
-        email: req.body.email,
-        pwd: req.body.pwd,      
-        UserType: req.body.UserType
-    });
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_KEY,
+    api_secret: process.env.CLOUDINARY_SECRET
+});
 
-    CustColRef.save()
-        .then((doc) => {
-            resp.status(200).json({ status: true, msg: "record saved", doc: doc });
-        })
-        .catch((err) => {
-            resp.status(200).json({ status: false, msg: err.message });
+
+const SECRET_KEY = process.env.AADHAAR_SECRET_KEY;
+
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+async function Signup(req, resp) {
+    try {
+        const hashed = await bcrypt.hash(req.body.pwd, 10);
+
+        let CustColRef = new UseColRef({
+            email: req.body.email,
+            pwd: hashed,           // ✅ hashed
+            UserType: req.body.UserType
         });
+
+        const doc = await CustColRef.save();
+        resp.status(200).json({ status: true, msg: "record saved", doc: doc });
+
+    } catch(err) {
+        resp.status(200).json({ status: false, msg: err.message });
+    }
 }
 
 
@@ -35,7 +45,7 @@ async function getTailorByEmail(req, res) {
   try {
     const { email } = req.params;
 
-    const user = await TailorModel.findOne({ email });
+    const user = await TailorModel.findOne({ email }).select("-pwd");
 
     if (!user) {
       return res.status(404).json({ msg: "Tailor not found" });
@@ -56,36 +66,57 @@ const Tailor = require("../models/Tailor");
 
 async function Login(req, res) {
   const { email, pwd } = req.body;
-
+ console.log("LOGIN REQUEST:", req.body);
   try {
     // Customer check
     let user = await Customer.findOne({ email });
-
-    if (user && user.pwd === pwd) {
-      return res.json({
-        status: true,
-        user,
-        role: "Customer"
-      });
+  console.log("CUSTOMER FOUND:", !!user);
+    if (user) {
+        console.log("CUSTOMER HASH:", user.pwd);
+      const match = await bcrypt.compare(pwd, user.pwd);
+       console.log("CUSTOMER MATCH:", match);
+      if (match) {
+        const userObj = user.toObject();
+        delete userObj.pwd;                                              // ✅ password hataya
+        const token = jwt.sign(
+          { email, role: "Customer" },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" }
+        );                                                                // ✅ token banaya
+        return res.json({ status: true, user: userObj, role: "Customer", token });
+      }
     }
 
     // Tailor check
     user = await Tailor.findOne({ email });
-
-    if (user && user.pwd === pwd) {
-      return res.json({
-        status: true,
-        user,
-        role: "Tailor"
-      });
+    console.log("TAILOR FOUND:", !!user);
+    if (user) {
+          console.log("TAILOR HASH:", user.pwd);
+      const match = await bcrypt.compare(pwd, user.pwd);
+        console.log("TAILOR MATCH:", match);
+      if (match) {
+        const userObj = user.toObject();
+        delete userObj.pwd;                                              // ✅ password hataya
+        const token = jwt.sign(
+          { email, role: "Tailor" },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" }
+        );                                                                // ✅ token banaya
+        return res.json({ status: true, user: userObj, role: "Tailor", token });
+      }
     }
 
     res.status(401).json({ msg: "Invalid credentials" });
 
   } catch (err) {
+
+    console.log("LOGIN ERROR:", err);
+
     res.status(500).json({ msg: err.message });
   }
 }
+
+
 
 async function TailorDetails(req, resp) {
     try {
@@ -217,18 +248,20 @@ async function doExtractAadhaar(req, resp) {
 
 
 function encrypt(text) {
+  if (!text) return undefined;                                          // ✅ undefined crash se bachao
+
+  const iv = crypto.randomBytes(16);                                     // ✅ random IV
   const cipher = crypto.createCipheriv(
     "aes-256-cbc",
     crypto.createHash("sha256").update(SECRET_KEY).digest(),
-    Buffer.alloc(16, 0)
+    iv
   );
 
   let encrypted = cipher.update(text, "utf8", "hex");
   encrypted += cipher.final("hex");
 
-  return encrypted;
+  return iv.toString("hex") + ":" + encrypted;                          // ✅ IV ko bhi store karo
 }
-
 
 
 // 🔥 GET Tailor By Mobile
@@ -332,7 +365,7 @@ filter.workType = workType
 }
 
 
-const tailors = await UseColRef.find(filter)
+const tailors = await UseColRef.find(filter).select("-pwd")
 
 // 👇 Important check
 if(tailors.length === 0){
@@ -497,7 +530,7 @@ async function getFullTailorProfile(req, res) {
   try {
     const { id } = req.params;
 
-    const tailor = await UseColRef.findById(id);
+    const tailor = await UseColRef.findById(id).select("-pwd");
 
     if (!tailor) {
       return res.status(404).json({
@@ -519,11 +552,6 @@ async function getFullTailorProfile(req, res) {
 
 
 
-cloudinary.config({
-    cloud_name: 'dstzxbqkc',
-    api_key: '545895537255412',
-    api_secret: '39NRt4cclzYfhcuY8YAItXTwxkU'
-});
 
 
 module.exports = {

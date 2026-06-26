@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import API from "../api/api";
 interface FormData {
   email: string;
   pwd: string;
@@ -64,18 +63,8 @@ export default function Signup({ setShowLogin, setShowSignup }: any) {
     }
 
     try {
-     const BASE_URL = "https://tailorconnect-backend.onrender.com";
-
-const url =
-  userType === "Customer"
-    ? `${BASE_URL}/Customer/Signup`
-    : `${BASE_URL}/Tailor/Signup`;
-
-      await axios.post(url, {
-        email,
-        pwd,
-        UserType: userType
-      });
+  const url = userType === "Customer" ? "/customer/Signup" : "/Tailor/Signup";
+await API.post(url, { email, pwd, UserType: userType });
 
       alert("Signup Successful 🎉");
 

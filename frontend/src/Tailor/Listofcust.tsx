@@ -97,7 +97,8 @@ export default function Customers() {
     try {
       const tailorId = localStorage.getItem("tailorId");
 
-      const res = await fetch("https://tailorconnect-backend.onrender.com7/TailorCustomer/add", {
+      // ✅ Fix
+const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -170,7 +171,7 @@ export default function Customers() {
     if (mode !== "existing" || !form.phone) return;
 
     const res = await fetch(
-      `http://localhost:https://tailorconnect-backend.onrender.com/Customer/check/${form.phone}`
+      `https://tailorconnect-backend.onrender.com/Customer/check/${form.phone}`
     );
 
     const data = await res.json();
@@ -198,7 +199,8 @@ export default function Customers() {
       alert("Please fill all measurements");
       return;
     }
-    await fetch("http://localhost:200https://tailorconnect-backend.onrender.com/TailorCustomer/update-measurements", {
+    await fetch(
+"https://tailorconnect-backend.onrender.com/TailorCustomer/update-measurements", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

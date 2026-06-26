@@ -131,7 +131,7 @@ const CustomerProfileForm: React.FC = () => {
       formData.append("gender", profile.gender || "");
       formData.append("dob", profile.dob || "");
       formData.append("phone", profile.phone);
-      formData.append("email", profile.email || "");
+     formData.append("email", localStorage.getItem("email") || "");
       formData.append("street", profile.address?.street || "");
       formData.append("city", profile.address?.city || "");
       formData.append("state", profile.address?.state || "");
@@ -141,11 +141,23 @@ const CustomerProfileForm: React.FC = () => {
       if (profile.profilePic)
   formData.append("profilepic", profile.profilePic); 
 
-      await API.post("/Customer/CustomerDetails", formData, {
+    await API.post("/customer/CustomerDetails", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-localStorage.setItem("email", profile.email || "");
-      alert("Profile saved successfully!");
+const savedEmail = localStorage.getItem("email") || "";
+if (savedEmail) {
+  const res = await API.get(`/customer/getByEmail/${savedEmail}`);
+  const data = res.data;
+  setProfile(prev => ({ 
+    ...prev, 
+    ...data,
+    address: data.address || prev.address
+  }));
+}
+setIsNewUser(false);
+setIsEditing(false);
+alert("Profile saved successfully!");
+window.location.reload();
     } catch (err) {
       console.error("Error saving profile:", err);
       alert("Error saving profile");
@@ -156,17 +168,18 @@ useEffect(() => {
   const email = localStorage.getItem("email");
   if (!email) return;
 
-fetch(`https://tailorconnect-backend.onrender.com/Customer/getByEmail/${email}`)
-    .then(res => res.json())
+API.get(`/customer/getByEmail/${email}`)
+    .then(res => res.data)
     .then(data => {
       console.log("API:", data);
 
       if (data && data.email && data.name) {
         // ✅ EXISTING USER
-        setProfile(prev => ({
-          ...prev,
-          ...data
-        }));
+      setProfile(prev => ({
+  ...prev,
+  ...data,
+  address: data.address || prev.address
+}));
 
         setIsEditing(false);
         setIsNewUser(false);
@@ -179,6 +192,32 @@ fetch(`https://tailorconnect-backend.onrender.com/Customer/getByEmail/${email}`)
     .catch(err => console.log(err));
 }, []);
 
+
+
+// AUTO LOGOUT - 10 min idle
+useEffect(() => {
+  let timer: ReturnType<typeof setTimeout>;
+
+  const resetTimer = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      localStorage.clear();
+      window.location.href = "/";
+    }, 10 * 60 * 1000); // 10 minutes
+  };
+
+  window.addEventListener("mousemove", resetTimer);
+  window.addEventListener("keydown", resetTimer);
+  window.addEventListener("click", resetTimer);
+  resetTimer();
+
+  return () => {
+    clearTimeout(timer);
+    window.removeEventListener("mousemove", resetTimer);
+    window.removeEventListener("keydown", resetTimer);
+    window.removeEventListener("click", resetTimer);
+  };
+}, []);
 
   return (
   <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-serif bg-[#f8f1df]">
@@ -410,13 +449,17 @@ fetch(`https://tailorconnect-backend.onrender.com/Customer/getByEmail/${email}`)
   </button>
 ) : !isEditing ? (
   // 👤 EXISTING USER → UPDATE BUTTON
-  <button
-    type="button"
-    onClick={() => setIsEditing(true)}
-    className="w-full py-4 rounded-lg border border-[#b8963f] text-[#b8963f]"
-  >
-    UPDATE PROFILE
-  </button>
+ <button
+  type="button"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsEditing(true);
+  }}
+  className="w-full py-4 rounded-lg border border-[#b8963f] text-[#b8963f]"
+>
+  UPDATE PROFILE
+</button>
 ) : (
   // ✏️ EDIT MODE → SAVE
   <button

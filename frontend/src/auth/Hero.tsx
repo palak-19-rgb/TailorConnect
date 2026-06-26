@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import heroImg from "../assets/image.png";
 import Login from "./Login";
 import Signup from "./Signup";
+import gsap from "gsap";
 
 
 export default function Hero() {
@@ -10,6 +11,7 @@ export default function Hero() {
   const [loaded, setLoaded] = useState(false);
   const [showNav, setShowNav] = useState(true);
   const [quote, setQuote] = useState("");
+  const pathRef = useRef(null);
 
   const [showLogin, setShowLogin] = useState(false);
 const [showSignup, setShowSignup] = useState(false);
@@ -27,6 +29,21 @@ useEffect(() => {
     lastScroll = window.scrollY;
   });
 }, []);
+
+
+
+useEffect(() => {
+  gsap.to(pathRef.current, {
+    strokeDashoffset: 1000,
+    duration: 6,
+    repeat: -1,
+    ease: "linear"
+  });
+}, []);
+
+
+
+
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -168,19 +185,47 @@ backdrop-blur-xl bg-gradient-to-b from-black/60 to-transparent border-b border-w
 
       {/* ================= HERO ================= */}
       <section ref={ref} className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className={`w-full overflow-x-hidden ${showLogin || showSignup ? "blur-md" : ""}`}></div>
+       
 
-        <motion.img
-          src={heroImg}
-          style={{ scale, y }}
+      <motion.img
+  src={heroImg}
+  style={{ scale, y }}
+  animate={{ scale: [1, 1.1, 1] }}
+  transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
           className="absolute w-full h-full object-cover"
         />
 
-        <div className="absolute inset-0 bg-black/30"></div>
+<section
+  ref={ref}
+  className={`relative h-screen flex items-center justify-center overflow-hidden ${
+    showLogin || showSignup ? "blur-md" : ""
+  }`}
+></section>
+
+
+
+<svg
+  className="absolute inset-0 w-full h-full opacity-20"
+  viewBox="0 0 1440 800"
+>
+<path
+  ref={pathRef}
+  d="M0 300 Q400 150 800 300 T1440 300"
+  stroke="#C6A75E"
+  strokeWidth="1.5"
+  fill="transparent"
+  strokeDasharray="1000"
+/>
+</svg>
+
+
+
+       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60"></div>
 
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: loaded ? 1 : 0, y: loaded ? 0 : 60 }}
+         initial={{ opacity: 0, y: 80 }}
+animate={{ opacity: loaded ? 1 : 0, y: loaded ? 0 : 80 }}
+transition={{ duration: 1.2, ease: "easeOut" }}
           className="relative z-10 text-center px-6"
         >
           <h1 className="text-6xl text-[#F5E6C8] mb-4">
@@ -191,6 +236,10 @@ backdrop-blur-xl bg-gradient-to-b from-black/60 to-transparent border-b border-w
             Where every stitch becomes a conversation between the artisan and the wearer.
           </p>
         </motion.div>
+
+
+
+
 {(showLogin || showSignup) && (
   <div className="fixed inset-0 z-[999] flex items-center justify-center">
 

@@ -6,27 +6,25 @@ async function addClient(req, res) {
   try {
     const { tailorId, phone, name, address, outfit, deliveryDate, email } = req.body;
 
+    if (!phone) {                                              // ✅ check upar le aaya
+      return res.status(400).json({ error: "Phone required" });
+    }
+
     // 🔍 check existing customer
     let existing = await Customer.findOne({ phone });
 
-
-let newClient = new TailorCustomer({
-  tailorId,
-  phone,
-  email, // ✅ ADD THIS
-  outfit,
-  lastVisit: new Date().toLocaleDateString(),
-  measurements: {},
-  deliveryDate,
-  status: "Pending"
-});
+    let newClient = new TailorCustomer({
+      tailorId,
+      phone,
+      email,
+      outfit,
+      lastVisit: new Date().toLocaleDateString(),
+      measurements: {},
+      deliveryDate,
+      status: "Pending"
+    });
 
     if (existing) {
-
-if (!phone) {
-  return res.status(400).json({ error: "Phone required" });
-}
-
       // 🟢 OLD CUSTOMER
       newClient.customerId = existing._id;
       newClient.name = existing.name;
@@ -36,7 +34,7 @@ if (!phone) {
       // 🔴 NEW CUSTOMER
       newClient.name = name;
       newClient.address = address;
-       newClient.email = email
+      newClient.email = email;
     }
 
     await newClient.save();
@@ -47,6 +45,9 @@ if (!phone) {
     res.status(500).json({ error: err.message });
   }
 }
+
+
+
 
 // ✅ GET ALL CLIENTS OF A TAILOR
 async function getClients(req, res) {
@@ -94,7 +95,7 @@ async function deleteClient(req, res) {
   }
 }
 
-status: "Pending"
+
 
 
 
@@ -127,17 +128,14 @@ async function updateStatus(req, res) {
     );
 
     // 🔥 MAIL LOGIC
-    if (status === "Ready" || status === "Delivered") {
-      await sendMail(
-        order.email, // ⚠️ ensure DB me email field ho
-        `Order ${status} ✨`,
-        `Hi ${order.name},
+  if (status === "Ready" || status === "Delivered") {
+  await sendMail(
+    order.email,
+    `Order ${status} ✨`,
+    order                                                   // ✅ pura object bhejo
+  );
+}
 
-Your outfit (${order.outfit}) is ${status} 🎉
-
-Thank you for trusting us ✂️`
-      );
-    }
 
     res.json({ success: true, order });
 

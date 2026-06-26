@@ -8,7 +8,7 @@ import MyMeasurements from "./MyMeasurement";
 import MyOrders from "./Myorders";
 import SavedTailors from "./SavedTailors";
 import API from "../api/api";
-
+import Chatbot from "./Chatbot";
 
 /* ================= HERO ================= */
 function HeroSection() {
@@ -342,6 +342,7 @@ useEffect(() => {
 /* ================= ROUTER ================= */
 export default function CustomerDashboard() {
   return (
+    <>
       <Routes>
         
         <Route path="/" element={<DashboardHome />} />
@@ -351,5 +352,8 @@ export default function CustomerDashboard() {
         <Route path="/saved-tailors" element={<SavedTailors />} />
         <Route path="/profile" element={<CustomerProfile />} />
       </Routes>
+           <Chatbot />
+
+      </>
   );
 }

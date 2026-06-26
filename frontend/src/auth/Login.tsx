@@ -70,6 +70,7 @@ useEffect(() => {
     setLoading(true);
 
    const response = await API.post("/Login", { email, pwd });
+   console.log("LOGIN:", response.data);
 const data = response.data;
 
 const role = data.role;

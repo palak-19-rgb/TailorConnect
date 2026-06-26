@@ -19,6 +19,7 @@ let colDesign = {
   otherInfo: String,
 
   profilePhoto: String,
+  aadharCard: String,
   aadhaarNumber: String,  
 
   shopAddress: {

@@ -1,22 +1,21 @@
 var tailorController = require("../controllers/Tailor");
 var express = require("express");
 var router = express.Router();
+var verifyToken = require("../middleware/auth");          
 
-router.post("/Signup", tailorController.Signup);
-router.post("/TailorDetails", tailorController.TailorDetails);
-router.get("/getByEmail/:email", tailorController.getTailorByEmail);
-router.post("/extract-aadhaar", tailorController.doExtractAadhaar);
-router.get("/tailorprofile/:mobile", tailorController.getTailorProfile);
-router.post("/addReview", tailorController.addReview);
-router.get("/reviews/:mobile", tailorController.getReviews);
-router.get("/tailors", tailorController.getTailors);
-router.post("/add-portfolio", tailorController.addPortfolio);
-router.get("/get-portfolio/:email", tailorController.getPortfolio);
-router.post("/delete-portfolio", tailorController.deletePortfolio);
-router.post("/update-portfolio", tailorController.updatePortfolio);
-router.post("/update-single-image", tailorController.updateSingleImage);
-router.get("/tailor/:id", tailorController.getFullTailorProfile);
-
-
+router.post("/Signup", tailorController.Signup);                                       // public
+router.post("/TailorDetails", verifyToken, tailorController.TailorDetails);           // 🔒 protected
+router.get("/getByEmail/:email", tailorController.getTailorByEmail);                   // public
+router.post("/extract-aadhaar", verifyToken, tailorController.doExtractAadhaar);       // 🔒 protected
+router.get("/tailorprofile/:mobile", tailorController.getTailorProfile);               // public
+router.post("/addReview", verifyToken, tailorController.addReview);                    // 🔒 protected
+router.get("/reviews/:mobile", tailorController.getReviews);                           // public
+router.get("/tailors", tailorController.getTailors);                                   // public
+router.post("/add-portfolio", verifyToken, tailorController.addPortfolio);             // 🔒 protected
+router.get("/get-portfolio/:email", tailorController.getPortfolio);                    // public
+router.post("/delete-portfolio", verifyToken, tailorController.deletePortfolio);       // 🔒 protected
+router.post("/update-portfolio", verifyToken, tailorController.updatePortfolio);       // 🔒 protected
+router.post("/update-single-image", verifyToken, tailorController.updateSingleImage);  // 🔒 protected
+router.get("/tailor/:id", tailorController.getFullTailorProfile);        
 
 module.exports = router;

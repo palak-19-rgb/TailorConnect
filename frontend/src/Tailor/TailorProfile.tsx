@@ -94,18 +94,18 @@ const [isNewUser, setIsNewUser] = useState(false);
     }
 
     // 🚀 Aadhaar OCR Trigger
-    if (e.target.name === "aadhaarPhoto") {
-      const formData = new FormData();
-      formData.append("aadhaarPhoto", file);
+if (e.target.name === "aadhaarPhoto") {
+  const formData = new FormData();
+  formData.append("aadhaarPhoto", file);
 
-      try {
-        const res = await fetch(
-          "https://tailorconnect-backend.onrender.com/Tailor/extract-aadhaar",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+  try {
+    const res = await fetch("https://tailorconnect-backend.onrender.com/Tailor/extract-aadhaar", {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    });
 
         const data = await res.json();
 
@@ -271,8 +271,16 @@ if (data && data.shopName) {
     const data = await res.json();
     console.log("Backend Response:", data);
 
-    alert("Saved Successfully ");
-
+  const email = localStorage.getItem("email");
+if (email) {
+  const freshRes = await fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`);
+  const freshData = await freshRes.json();
+  if (freshData.profilePhoto) setPreview(freshData.profilePhoto);
+  setProfile(prev => ({ ...prev, ...freshData }));
+}
+setIsNewUser(false);
+setIsEditing(false);
+alert("Saved Successfully ");
   } catch (err) {
     console.log(err);
   }
@@ -290,6 +298,33 @@ if (data && data.shopName) {
 
   const labelStyle =
     "w-52 text-xs uppercase tracking-[3px] text-[#b8860b]";
+
+
+
+// AUTO LOGOUT - 10 min idle
+useEffect(() => {
+  let timer: ReturnType<typeof setTimeout>;
+
+  const resetTimer = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      localStorage.clear();
+      window.location.href = "/";
+    }, 10 * 60 * 1000); // 10 minutes
+  };
+
+  window.addEventListener("mousemove", resetTimer);
+  window.addEventListener("keydown", resetTimer);
+  window.addEventListener("click", resetTimer);
+  resetTimer();
+
+  return () => {
+    clearTimeout(timer);
+    window.removeEventListener("mousemove", resetTimer);
+    window.removeEventListener("keydown", resetTimer);
+    window.removeEventListener("click", resetTimer);
+  };
+}, []);
 
 
   return (
@@ -545,7 +580,11 @@ if (data && data.shopName) {
  {step === 3 && !isNewUser && !isEditing && (
   <button
     type="button"
-    onClick={() => setIsEditing(true)}
+    onClick={(e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsEditing(true);
+}}
     className="ml-auto px-6 py-2 rounded-lg border border-[#b8860b] text-[#b8860b]"
   >
     UPDATE ATELIER PROFILE

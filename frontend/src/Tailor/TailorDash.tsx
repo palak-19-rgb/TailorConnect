@@ -8,6 +8,8 @@ import Portfolio from "./Portfolio";
 import OrderStatus from "./Status";
 import TailorProfile from "./TailorProfile";
 import API from "../api/api";
+import Chatbot from "./Chatbot";
+
 
 /* ================= HERO ================= */
 function TailorHero() {
@@ -280,7 +282,7 @@ useEffect(() => {
 /* ================= ROUTER ================= */
 export default function TailorDashboard() {
     return (
-  
+  <>
             <Routes>
                 <Route path="/" element={<TailorHome />} />
                 <Route path="/complete-orders" element={<CompleteOrders />} />
@@ -289,6 +291,7 @@ export default function TailorDashboard() {
                 <Route path="/status" element={<OrderStatus />} />
                 <Route path="/profile" element={<TailorProfile />} />
             </Routes>
-  
+              <Chatbot />
+  </>
     );
 }

@@ -15,7 +15,7 @@ module.exports={connectToMongoDB}
 const mongoose = require("mongoose");
 
 function connectToMongoDB() {
-  mongoose.connect("mongodb+srv://TailorConnect:Kartik.2016@cluster0.kk8pqxt.mongodb.net/TailorConnect?retryWrites=true&w=majority")
+  mongoose.connect(process.env.MONGO_URI)
     .then(() => {
       console.log("MongoDB Atlas Connected ✅");
     })
