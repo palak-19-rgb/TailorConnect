@@ -168,7 +168,9 @@ useEffect(() => {
   const email = localStorage.getItem("email");
   if (!email) return;
 
-  fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`)
+  fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  })
     .then(res => res.json())
    .then(data => {
   console.log("API DATA:", data); // DEBUG
@@ -263,9 +265,12 @@ if (data && data.shopName) {
   });
 
   try {
-    const res = await fetch("https://tailorconnect-backend.onrender.com/Tailor/TailorDetails", {
+ const res = await fetch("https://tailorconnect-backend.onrender.com/Tailor/TailorDetails", {
   method: "POST",
   body: formData,
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
 });
 
     const data = await res.json();
@@ -273,7 +278,9 @@ if (data && data.shopName) {
 
   const email = localStorage.getItem("email");
 if (email) {
-  const freshRes = await fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`);
+  const freshRes = await fetch(`https://tailorconnect-backend.onrender.com/Tailor/getByEmail/${email}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
   const freshData = await freshRes.json();
   if (freshData.profilePhoto) setPreview(freshData.profilePhoto);
   setProfile(prev => ({ ...prev, ...freshData }));
