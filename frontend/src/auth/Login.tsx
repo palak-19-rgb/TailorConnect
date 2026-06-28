@@ -76,7 +76,8 @@ const data = response.data;
 const role = data.role;
 
 // ✅ dynamic API
-const fullUser = await API.get(`/${role}/getByEmail/${email}`);
+const rolePath = role === "Customer" ? "customer" : "Tailor";
+const fullUser = await API.get(`/${rolePath}/getByEmail/${email}`);
 const user = fullUser.data;
 
 // 🔥 PROFILE COMPLETE CHECK
