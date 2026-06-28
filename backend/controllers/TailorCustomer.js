@@ -145,7 +145,46 @@ async function updateStatus(req, res) {
   }
 }
 
+async function getAnalytics(req, res) {
+  try {
+    const { tailorId } = req.params;
+    const orders = await TailorCustomer.find({ tailorId });
 
+    const totalOrders = orders.length;
+    const delivered = orders.filter(o => o.status === "Delivered").length;
+    const pending = orders.filter(o => o.status !== "Delivered").length;
+
+    // outfit type count
+    const outfitCount = {};
+    orders.forEach(o => {
+      if (o.outfit) {
+        outfitCount[o.outfit] = (outfitCount[o.outfit] || 0) + 1;
+      }
+    });
+
+    const sortedOutfits = Object.entries(outfitCount).sort((a, b) => b[1] - a[1]);
+    const topOutfit = sortedOutfits[0]?.[0] || "N/A";
+
+    // this month orders
+    const now = new Date();
+    const thisMonthOrders = orders.filter(o => {
+      const d = new Date(o.lastVisit || o.deliveryDate);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    res.json({
+      totalOrders,
+      delivered,
+      pending,
+      topOutfit,
+      thisMonthCount: thisMonthOrders.length,
+      outfitBreakdown: outfitCount
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 
 
 module.exports = {
@@ -154,6 +193,6 @@ module.exports = {
   updateMeasurements,
   deleteClient,
   updateStatus,
-  getCustomerOrders
+  getCustomerOrders,getAnalytics
 
 };
