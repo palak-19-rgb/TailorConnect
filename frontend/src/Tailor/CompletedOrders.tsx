@@ -8,21 +8,24 @@ export default function CompletedOrders() {
     fetchCompletedOrders();
   }, []);
 
-  const fetchCompletedOrders = async () => {
+const fetchCompletedOrders = async () => {
     const tailorId = localStorage.getItem("tailorId");
     if (!tailorId) return;
 
     const res = await fetch(
-      `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`
+      `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`,
+      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
     );
 
     const data = await res.json();
 
-    const delivered = data
-      .filter((o: any) => o.status === "Delivered")
-      .sort((a: any, b: any) =>
-        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
-      );
+    const delivered = Array.isArray(data)
+      ? data
+          .filter((o: any) => o.status === "Delivered")
+          .sort((a: any, b: any) =>
+            new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+          )
+      : [];
 
     setOrders(delivered);
   };
