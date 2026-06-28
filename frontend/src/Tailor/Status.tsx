@@ -67,6 +67,7 @@ setOrders(Array.isArray(data) ? data : []);
 };
 
 
+
 const updateStatus = async (id: string, newStatus: string) => {
   await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/update-status", {
     method: "POST",
@@ -77,7 +78,15 @@ const updateStatus = async (id: string, newStatus: string) => {
     body: JSON.stringify({ id, status: newStatus })
   });
 
-await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
+  fetchOrders();
+};
+
+
+const deleteOrder = async (id: string) => {
+  const confirmDelete = window.confirm("Delete this order?");
+  if (!confirmDelete) return;
+
+  await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -86,8 +95,6 @@ await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", 
     body: JSON.stringify({ id })
   });
 
-  fetchOrders();
-};
   fetchOrders();
 };
 
