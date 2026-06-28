@@ -27,7 +27,8 @@ export default function Customers() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState("new");
   const [search, setSearch] = useState("");
-
+const [isListening, setIsListening] = useState(false);
+const [activeCustomerId, setActiveCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -212,6 +213,66 @@ const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustom
     await fetchCustomers(); // refresh list
     alert("Measurements saved ✅");
   };
+
+
+const startVoiceInput = (customerId: string) => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Voice input not supported in this browser. Use Chrome.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  setIsListening(true);
+  setActiveCustomerId(customerId);
+  recognition.start();
+
+  recognition.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    console.log("Voice:", transcript);
+
+    const patterns: { [key: string]: RegExp } = {
+      chest:    /chest\s*(\d+)/i,
+      waist:    /waist\s*(\d+)/i,
+      hip:      /hip\s*(\d+)/i,
+      shoulder: /shoulder\s*(\d+)/i,
+      sleeve:   /sleeve\s*(\d+)/i,
+      length:   /length\s*(\d+)/i,
+    };
+
+    let updated = false;
+    Object.entries(patterns).forEach(([field, regex]) => {
+      const match = transcript.match(regex);
+      if (match) {
+        updateMeasurement(customerId, field, match[1]);
+        updated = true;
+      }
+    });
+
+    if (!updated) {
+      alert(`Could not parse: "${transcript}". Try saying "chest 38 waist 32"`);
+    }
+  };
+
+  recognition.onerror = () => {
+    setIsListening(false);
+    setActiveCustomerId(null);
+  };
+
+  recognition.onend = () => {
+    setIsListening(false);
+    setActiveCustomerId(null);
+  };
+};
+
+
 
 
 
@@ -455,6 +516,19 @@ const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustom
             {openId === c._id && (
               <div className="mt-3">
 
+<button
+  type="button"
+  onClick={() => startVoiceInput(c._id)}
+  className={`w-full mb-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
+    ${isListening && activeCustomerId === c._id
+      ? "bg-red-500 text-white animate-pulse shadow-lg"
+      : "bg-[#f3e2b4] text-[#b8963f] border border-[#d4b25f] hover:bg-[#d4b25f] hover:text-white"
+    }`}
+>
+  {isListening && activeCustomerId === c._id
+    ? "🎙️ Listening... (say chest 38 waist 32)"
+    : "🎙️ Voice Input"}
+</button>
                 <div className="grid grid-cols-2 gap-3">
 
                   {fields.map(field => (
