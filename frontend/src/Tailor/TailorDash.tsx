@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useEffect, useState } from "react";
-
 import CompleteOrders from "./CompletedOrders";
 import CustomerList from "./Listofcust";
 import Portfolio from "./Portfolio";
 import OrderStatus from "./Status";
 import TailorProfile from "./TailorProfile";
+import Analytics from "./Analyticschart";
 import API from "../api/api";
 import Chatbot from "./Chatbot";
 
@@ -139,13 +139,13 @@ const handleLogout = () => {
 function TailorHome() {
     const nav = useNavigate();
 const [profileComplete, setProfileComplete] = useState(false);
-const [analytics, setAnalytics] = useState<any>(null);
     const cards = [
         { title: "👤 Profile", path: "profile" },
         { title: "🧵 My Portfolio", path: "portfolio" },
         { title: "👥 Customer List", path: "customers" },
         { title: "📊 Order Status", path: "status" },
         { title: "📦 Complete Orders", path: "complete-orders" },
+         { title: "📈 Analytics", path: "analytics" },
     ];
 
 useEffect(() => {
@@ -172,20 +172,6 @@ useEffect(() => {
 }, []);
 
 
-
-useEffect(() => {
-  const tailorId = localStorage.getItem("tailorId");
-  if (!tailorId) return;
-
-  API.get(`/TailorCustomer/analytics/${tailorId}`)
-    .then((res: any) => {
-      setAnalytics(res.data);
-    })
-    .catch((err: any) => {
-      console.log("Analytics error:", err);
-    });
-}, []);
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -195,38 +181,6 @@ useEffect(() => {
 
          <TailorHero />
 
-            {/* 📊 ANALYTICS DASHBOARD */}
-            {analytics && (
-              <div className="px-10 pt-10">
-                <h2 className="text-2xl font-serif text-[#8c7440] mb-6 text-center">
-                  Business Snapshot 📊
-                </h2>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
-                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Total Orders</p>
-                    <h3 className="text-3xl font-bold text-[#b8963f] mt-2">{analytics.totalOrders}</h3>
-                  </div>
-
-                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
-                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">This Month</p>
-                    <h3 className="text-3xl font-bold text-[#b8963f] mt-2">{analytics.thisMonthCount}</h3>
-                  </div>
-
-                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
-                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Delivered</p>
-                    <h3 className="text-3xl font-bold text-green-600 mt-2">{analytics.delivered}</h3>
-                  </div>
-
-                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
-                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Top Outfit</p>
-                    <h3 className="text-xl font-bold text-[#b8963f] mt-2">{analytics.topOutfit}</h3>
-                  </div>
-
-                </div>
-              </div>
-            )}
 
             {/* CARDS */}
             <div className="px-10 py-16">
@@ -317,6 +271,7 @@ export default function TailorDashboard() {
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/status" element={<OrderStatus />} />
                 <Route path="/profile" element={<TailorProfile />} />
+                  <Route path="/analytics" element={<Analytics />} />
             </Routes>
               <Chatbot />
   </>

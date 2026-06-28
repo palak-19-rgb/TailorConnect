@@ -213,7 +213,7 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ## Customer Dashboard
 
 <p align="center">
-<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\image.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\cusromerdash.png" width="900">
 </p>
 ---
 ## Tailor Dashboard
@@ -226,7 +226,8 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ## AI Chatbot
 
 <p align="center">
-<img src="assets/screenshots/chatbot.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\chat.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\chatt.png" width="900">
 </p>
 
 ---
@@ -234,7 +235,7 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ## Real-Time Chat
 
 <p align="center">
-<img src="assets/screenshots/realtime-chat.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\realtime.png" width="900">
 </p>
 
 ---
