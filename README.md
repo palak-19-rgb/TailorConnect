@@ -218,7 +218,7 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ---
 ## Tailor Dashboard
 <p align="center">
-<img src="assets/screenshots/tailor-dashboard.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\Tailordash.png" width="900">
 </p>
 
 ---
@@ -242,7 +242,7 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ## Portfolio
 
 <p align="center">
-<img src="assets/screenshots/portfolio.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\Portfolio.png" width="900">
 </p>
 
 ---
@@ -254,11 +254,6 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 </p>
 
 ---
-
-## Aadhaar OCR
-
-<p align="center">
-<img src="assets/screenshots/aadhaar.png" width="900">
 </p>
 ---
 # 🛠 Technology Stack

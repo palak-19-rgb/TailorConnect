@@ -22,7 +22,7 @@ function Chatbot() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:1000/chatbot/message", {
+     const res = await fetch(`${import.meta.env.VITE_API_URL}/chatbot/tailor-message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input, sessionId }),
