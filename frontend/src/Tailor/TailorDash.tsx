@@ -139,6 +139,24 @@ const handleLogout = () => {
 function TailorHome() {
     const nav = useNavigate();
 const [profileComplete, setProfileComplete] = useState(false);
+
+useEffect(() => {
+  const email = localStorage.getItem("email");
+  if (!email) return;
+
+  API.get(`/Tailor/getByEmail/${email}`)
+    .then((res: any) => {
+      const data = res.data;
+
+      if (data?.shopName && data?.phone) {
+        setProfileComplete(true);
+      } else {
+        setProfileComplete(false);
+      }
+    })
+    .catch(() => setProfileComplete(false));
+}, []);
+
     const cards = [
         { title: "👤 Profile", path: "profile" },
         { title: "🧵 My Portfolio", path: "portfolio" },
