@@ -55,7 +55,8 @@ const filteredOrders = orders.filter(
 const fetchOrders = async () => {
 const tailorId = localStorage.getItem("tailorId");
   const res = await fetch(
-    `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`
+    `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`,
+    { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
   );
 
   const data = await res.json();
@@ -66,32 +67,27 @@ setOrders(Array.isArray(data) ? data : []);
 };
 
 
-
 const updateStatus = async (id: string, newStatus: string) => {
   await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/update-status", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`
     },
     body: JSON.stringify({ id, status: newStatus })
   });
 
-  fetchOrders();
-};
-
-
-const deleteOrder = async (id: string) => {
-  const confirmDelete = window.confirm("Delete this order?");
-  if (!confirmDelete) return;
-
-  await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
+await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`
     },
     body: JSON.stringify({ id })
   });
 
+  fetchOrders();
+};
   fetchOrders();
 };
 
