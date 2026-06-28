@@ -235,26 +235,36 @@ const startVoiceInput = (customerId: string) => {
   recognition.start();
 
   recognition.onresult = (event: any) => {
-    const transcript = event.results[0][0].transcript.toLowerCase();
-    console.log("Voice:", transcript);
+  const raw = event.results[0][0].transcript.toLowerCase();
+console.log("Voice:", raw);
 
+// ✅ common misheard words fix
+const transcript = raw
+  .replace(/chess/g, "chest")
+  .replace(/\bwest\b/g, "waist")
+  .replace(/\bwrist\b/g, "waist")
+  .replace(/sleeves/g, "sleeve")
+  .replace(/soldier/g, "shoulder")
+  .replace(/elder/g, "shoulder")
+  .replace(/\./g, " "); 
     const patterns: { [key: string]: RegExp } = {
-      chest:    /chest\s*(\d+)/i,
-      waist:    /waist\s*(\d+)/i,
-      hip:      /hip\s*(\d+)/i,
-      shoulder: /shoulder\s*(\d+)/i,
-      sleeve:   /sleeve\s*(\d+)/i,
-      length:   /length\s*(\d+)/i,
-    };
+  chest:    /ch(?:est|ess|es|Chess|chess)\s*(\d+)/i,
+  waist:    /w(?:aist|est|aste|rist)\s*(\d+)/i,
+  hip:      /hip\s*(\d+)/i,
+  shoulder: /sh(?:oulder|older|ouder)\s*(\d+)/i,
+  sleeve:   /sl(?:eeve|eeves|eve|eves)\s*(\d+)/i,
+  length:   /l(?:ength|enth|enght)\s*(\d+)/i,
+};
 
-    let updated = false;
-    Object.entries(patterns).forEach(([field, regex]) => {
-      const match = transcript.match(regex);
-      if (match) {
-        updateMeasurement(customerId, field, match[1]);
-        updated = true;
-      }
-    });
+  let updated = false;
+Object.entries(patterns).forEach(([field, regex]) => {
+  const match = transcript.match(regex);
+  console.log(`Trying ${field}:`, regex, "→ match:", match);
+  if (match) {
+    updateMeasurement(customerId, field, match[1]);
+    updated = true;
+  }
+});
 
     if (!updated) {
       alert(`Could not parse: "${transcript}". Try saying "chest 38 waist 32"`);
