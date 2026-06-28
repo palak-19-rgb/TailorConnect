@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 function Chatbot() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: string; text: string; imageUrl?: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -27,8 +27,12 @@ function Chatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input, sessionId }),
       });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
+     const data = await res.json();
+setMessages((prev) => [...prev, { 
+  role: "bot", 
+  text: data.reply,
+  imageUrl: data.imageUrl || null
+}]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -99,17 +103,23 @@ function Chatbot() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <span
-                    className={`
-                      inline-block px-3 py-2 rounded-2xl text-xs max-w-[80%] leading-relaxed
-                      ${m.role === "user"
-                        ? "bg-gradient-to-r from-[#b8963f] to-[#d4b25f] text-white shadow-md"
-                        : "bg-white/60 backdrop-blur-md border border-[#e3c98b] text-[#5c4b2c]"
-                      }
-                    `}
-                  >
-                    {m.text}
-                  </span>
+                 <div className={`
+  inline-block px-3 py-2 rounded-2xl text-xs max-w-[80%] leading-relaxed
+  ${m.role === "user"
+    ? "bg-gradient-to-r from-[#b8963f] to-[#d4b25f] text-white shadow-md"
+    : "bg-white/60 backdrop-blur-md border border-[#e3c98b] text-[#5c4b2c]"
+  }
+`}>
+  {m.text}
+  {m.imageUrl && (
+    <img
+      src={m.imageUrl}
+      alt="AI outfit preview"
+      className="mt-2 rounded-xl w-full max-w-[220px] border border-[#e3c98b] shadow"
+      onError={(e) => (e.currentTarget.style.display = "none")}
+    />
+  )}
+</div>
                 </motion.div>
               ))}
 

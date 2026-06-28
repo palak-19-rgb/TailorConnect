@@ -8,6 +8,12 @@ function looksLikeTailorQuery(message) {
   return /tailor|suggest|recommend|find|bridal|formal|casual|stitch|near|city/i.test(message);
 }
 
+
+function looksLikeOutfitImageQuery(message) {
+  return /generate|image|photo|dikhao|kaisa lagega|design|visualize|show.*outfit|outfit.*show|dress.*look|look.*dress|lehenga|sherwani|saree|kurta|suit/i.test(message);
+}
+
+
 function looksLikeMeasurementQuery(message) {
   const hasHeightOrWeight = /height|weight|tall|kg|cm|feet|foot|ft|inch|lbs|pounds/i.test(message);
   const hasMeasurementIntent = /measurement|size|fit|chest|waist|hip|stitch.*me|outfit/i.test(message);
@@ -26,7 +32,7 @@ async function chatWithBot(req, res) {
       customerSessions[sessionId] = [{ role: "system", content: SYSTEM_PROMPT }];
     }
 
-   let userContent = message;
+    let userContent = message;
 
     if (looksLikeTailorQuery(message)) {
       const tailors = await Tailor.find({})
@@ -50,7 +56,29 @@ Here is real tailor data from our database (use ONLY this data, don't invent nam
 ${JSON.stringify(context)}
 
 Recommend the best 1-3 matches by name with a short reason. If nothing matches, say so honestly.`;
+
+    } else if (looksLikeOutfitImageQuery(message)) {
+
+      const imagePrompt = `indian traditional outfit, ${message}, elegant, detailed, fashion photography, high quality`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}`;
+
+      customerSessions[sessionId].push({ role: "user", content: message });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          ...customerSessions[sessionId],
+          { role: "system", content: "User wants to visualize an outfit. Describe it beautifully in 2-3 lines and tell them an AI-generated preview is being shown below." }
+        ],
+        model: "llama-3.3-70b-versatile",
+      });
+
+      const reply = completion.choices[0].message.content;
+      customerSessions[sessionId].push({ role: "assistant", content: reply });
+
+      return res.json({ status: true, reply, imageUrl });
+
     } else if (looksLikeMeasurementQuery(message)) {
+
       userContent = `User asked: "${message}"
 
 The user wants rough measurement estimates based on the height/weight/details they provided. 
@@ -66,7 +94,6 @@ Clearly label these as rough estimates and remind them to get exact measurements
     });
 
     const reply = completion.choices[0].message.content;
-
     customerSessions[sessionId].push({ role: "assistant", content: reply });
 
     res.json({ status: true, reply });
@@ -76,7 +103,6 @@ Clearly label these as rough estimates and remind them to get exact measurements
     res.status(500).json({ status: false, msg: err.message });
   }
 }
-
 
 async function chatWithTailor(req, res) {
   try {

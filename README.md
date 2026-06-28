@@ -55,6 +55,9 @@ The project also emphasizes production engineering practices including API secur
 - 🛡 Helmet.js security headers
 - 🚦 Tiered API rate limiting
 - 🔑 Protected API routes using JWT middleware
+- 🎙️ Voice Input for measurements using Web Speech API (en-IN) with regex parsing
+- 📊 Business Analytics dashboard with order breakdown and Pie chart visualization
+- 📏 AI Measurement Suggestions — height/weight se estimated body measurements via Groq AI
 - 🔄 Browser back-button logout protection
 - ⏳ Profile lock after save with edit mode and 10-minute idle auto logout
 - 📊 K6 load tested with concurrent users and WebSocket clients
@@ -75,6 +78,9 @@ The project also emphasizes production engineering practices including API secur
 | Security | Helmet, JWT middleware, bcrypt, CORS, tiered API rate limiting |
 | Performance Validation | K6 stress testing with concurrent APIs & Socket.IO |
 | Deployment | Frontend on Vercel, Backend on Render, MongoDB Atlas |
+| Voice Measurements | Web Speech API (en-IN) + regex parser for hands-free 6-field measurement capture |
+| Business Analytics | Recharts Pie chart with order breakdown, monthly count, top outfit tracking |
+| AI Measurement Suggest | Groq LLaMA 3.3 estimates chest/waist/hip from height/weight with disclaimer |
 ---
 # 🏛 System Architecture
 ```text
@@ -251,7 +257,7 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 ## Order Tracking
 
 <p align="center">
-<img src="assets/screenshots/orders.png" width="900">
+<img src="C:\Users\hp\OneDrive\Desktop\TailorConnect\frontend\src\assets\screenshots\status.png" width="900">
 </p>
 
 ---
@@ -505,7 +511,6 @@ Rate Limiting
 - Push Notifications
 - Elasticsearch-powered tailor search
 - AI-powered outfit recommendation engine
-- AI-based measurement extraction from body images
 - Recommendation ranking using user preferences
 - Payment Gateway Integration
 - Admin Dashboard & Analytics
