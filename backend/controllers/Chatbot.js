@@ -8,6 +8,12 @@ function looksLikeTailorQuery(message) {
   return /tailor|suggest|recommend|find|bridal|formal|casual|stitch|near|city/i.test(message);
 }
 
+function looksLikeMeasurementQuery(message) {
+  const hasHeightOrWeight = /height|weight|tall|kg|cm|feet|foot|ft|inch|lbs|pounds/i.test(message);
+  const hasMeasurementIntent = /measurement|size|fit|chest|waist|hip|stitch.*me|outfit/i.test(message);
+  const hasNumbers = /\d/.test(message);
+  return hasNumbers && (hasHeightOrWeight || hasMeasurementIntent);
+}
 async function chatWithBot(req, res) {
   try {
     const { message, sessionId } = req.body;
@@ -20,7 +26,7 @@ async function chatWithBot(req, res) {
       customerSessions[sessionId] = [{ role: "system", content: SYSTEM_PROMPT }];
     }
 
-    let userContent = message;
+   let userContent = message;
 
     if (looksLikeTailorQuery(message)) {
       const tailors = await Tailor.find({})
@@ -44,6 +50,12 @@ Here is real tailor data from our database (use ONLY this data, don't invent nam
 ${JSON.stringify(context)}
 
 Recommend the best 1-3 matches by name with a short reason. If nothing matches, say so honestly.`;
+    } else if (looksLikeMeasurementQuery(message)) {
+      userContent = `User asked: "${message}"
+
+The user wants rough measurement estimates based on the height/weight/details they provided. 
+Give them estimated chest, waist, and hip measurements in inches based on standard body proportions. 
+Clearly label these as rough estimates and remind them to get exact measurements from a tailor for the best fit.`;
     }
 
     customerSessions[sessionId].push({ role: "user", content: userContent });
