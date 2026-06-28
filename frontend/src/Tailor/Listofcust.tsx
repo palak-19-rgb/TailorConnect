@@ -48,10 +48,10 @@ export default function Customers() {
         console.log("No tailorId found");
         return; // ❌ API call mat kar
       }
-
-      const res = await fetch(
-        `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`
-      );
+const res = await fetch(
+  `https://tailorconnect-backend.onrender.com/TailorCustomer/${tailorId}`,
+  { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+);
 
       const data = await res.json();
 
@@ -101,7 +101,8 @@ export default function Customers() {
 const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/add", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
           tailorId,
@@ -139,14 +140,14 @@ const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustom
   const deleteCustomer = async (id: string) => {
     const confirmDelete = window.confirm("Delete this customer?");
     if (!confirmDelete) return;
-    await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
+  await fetch("https://tailorconnect-backend.onrender.com/TailorCustomer/delete", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify({ id })
     });
-
     setCustomers(prev => prev.filter(c => c._id !== id));
   };
 
@@ -199,15 +200,15 @@ const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustom
       alert("Please fill all measurements");
       return;
     }
-    await fetch(
+ await fetch(
 "https://tailorconnect-backend.onrender.com/TailorCustomer/update-measurements", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify({ id, measurements })
     });
-
     await fetchCustomers(); // refresh list
     alert("Measurements saved ✅");
   };
