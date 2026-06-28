@@ -20,6 +20,12 @@ function looksLikeMeasurementQuery(message) {
   const hasNumbers = /\d/.test(message);
   return hasNumbers && (hasHeightOrWeight || hasMeasurementIntent);
 }
+
+
+
+
+
+
 async function chatWithBot(req, res) {
   try {
     const { message, sessionId } = req.body;
@@ -34,7 +40,28 @@ async function chatWithBot(req, res) {
 
     let userContent = message;
 
-    if (looksLikeTailorQuery(message)) {
+    if (looksLikeOutfitImageQuery(message)) {
+
+      const imagePrompt = `indian traditional outfit, ${message}, elegant, detailed, fashion photography, high quality`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}`;
+
+      customerSessions[sessionId].push({ role: "user", content: message });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          ...customerSessions[sessionId],
+          { role: "system", content: "User wants to visualize an outfit. Describe it beautifully in 2-3 lines and tell them an AI-generated preview is being shown below." }
+        ],
+        model: "llama-3.3-70b-versatile",
+      });
+
+      const reply = completion.choices[0].message.content;
+      customerSessions[sessionId].push({ role: "assistant", content: reply });
+
+      return res.json({ status: true, reply, imageUrl });
+
+    } else if (looksLikeTailorQuery(message)) {
+
       const tailors = await Tailor.find({})
         .select("-pwd -aadhaarNumber -aadharCard")
         .limit(8);
@@ -56,26 +83,6 @@ Here is real tailor data from our database (use ONLY this data, don't invent nam
 ${JSON.stringify(context)}
 
 Recommend the best 1-3 matches by name with a short reason. If nothing matches, say so honestly.`;
-
-    } else if (looksLikeOutfitImageQuery(message)) {
-
-      const imagePrompt = `indian traditional outfit, ${message}, elegant, detailed, fashion photography, high quality`;
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}`;
-
-      customerSessions[sessionId].push({ role: "user", content: message });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          ...customerSessions[sessionId],
-          { role: "system", content: "User wants to visualize an outfit. Describe it beautifully in 2-3 lines and tell them an AI-generated preview is being shown below." }
-        ],
-        model: "llama-3.3-70b-versatile",
-      });
-
-      const reply = completion.choices[0].message.content;
-      customerSessions[sessionId].push({ role: "assistant", content: reply });
-
-      return res.json({ status: true, reply, imageUrl });
 
     } else if (looksLikeMeasurementQuery(message)) {
 
@@ -103,7 +110,6 @@ Clearly label these as rough estimates and remind them to get exact measurements
     res.status(500).json({ status: false, msg: err.message });
   }
 }
-
 async function chatWithTailor(req, res) {
   try {
     const { message, sessionId } = req.body;
@@ -114,6 +120,26 @@ async function chatWithTailor(req, res) {
 
     if (!tailorSessions[sessionId]) {
       tailorSessions[sessionId] = [{ role: "system", content: TAILOR_SYSTEM_PROMPT }];
+    }
+
+    if (looksLikeOutfitImageQuery(message)) {
+      const imagePrompt = `indian traditional outfit, ${message}, elegant, detailed, fashion photography, high quality`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}`;
+
+      tailorSessions[sessionId].push({ role: "user", content: message });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          ...tailorSessions[sessionId],
+          { role: "system", content: "User wants to visualize an outfit for reference. Describe it beautifully in 2-3 lines and tell them an AI-generated preview is being shown below." }
+        ],
+        model: "llama-3.3-70b-versatile",
+      });
+
+      const reply = completion.choices[0].message.content;
+      tailorSessions[sessionId].push({ role: "assistant", content: reply });
+
+      return res.json({ status: true, reply, imageUrl });
     }
 
     tailorSessions[sessionId].push({ role: "user", content: message });
@@ -133,5 +159,6 @@ async function chatWithTailor(req, res) {
     res.status(500).json({ status: false, msg: err.message });
   }
 }
+
 
 module.exports = { chatWithBot, chatWithTailor };
