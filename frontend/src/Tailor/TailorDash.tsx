@@ -139,6 +139,7 @@ const handleLogout = () => {
 function TailorHome() {
     const nav = useNavigate();
 const [profileComplete, setProfileComplete] = useState(false);
+const [analytics, setAnalytics] = useState<any>(null);
     const cards = [
         { title: "👤 Profile", path: "profile" },
         { title: "🧵 My Portfolio", path: "portfolio" },
@@ -173,22 +174,17 @@ useEffect(() => {
 
 
 useEffect(() => {
-  const email = localStorage.getItem("email");
-  if (!email) return;
+  const tailorId = localStorage.getItem("tailorId");
+  if (!tailorId) return;
 
-  API.get(`/Tailor/getByEmail/${email}`)
+  API.get(`/TailorCustomer/analytics/${tailorId}`)
     .then((res: any) => {
-      const data = res.data;
-
-      if (data?.shopName && data?.phone) {
-        setProfileComplete(true);
-      } else {
-        setProfileComplete(false);
-      }
+      setAnalytics(res.data);
     })
-    .catch(() => setProfileComplete(false));
+    .catch((err: any) => {
+      console.log("Analytics error:", err);
+    });
 }, []);
-
 
     return (
         <motion.div
@@ -197,9 +193,40 @@ useEffect(() => {
             className="bg-gradient-to-br from-[#fdf8ec] via-[#f6ecd3] to-[#ead39a] min-h-screen"
         >
 
-            <TailorHero />
+         <TailorHero />
 
-            
+            {/* 📊 ANALYTICS DASHBOARD */}
+            {analytics && (
+              <div className="px-10 pt-10">
+                <h2 className="text-2xl font-serif text-[#8c7440] mb-6 text-center">
+                  Business Snapshot 📊
+                </h2>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
+                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Total Orders</p>
+                    <h3 className="text-3xl font-bold text-[#b8963f] mt-2">{analytics.totalOrders}</h3>
+                  </div>
+
+                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
+                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">This Month</p>
+                    <h3 className="text-3xl font-bold text-[#b8963f] mt-2">{analytics.thisMonthCount}</h3>
+                  </div>
+
+                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
+                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Delivered</p>
+                    <h3 className="text-3xl font-bold text-green-600 mt-2">{analytics.delivered}</h3>
+                  </div>
+
+                  <div className="bg-white/40 backdrop-blur-xl border border-[#e3c98b] p-6 rounded-3xl shadow-lg text-center">
+                    <p className="text-xs uppercase tracking-wide text-[#8c7440]">Top Outfit</p>
+                    <h3 className="text-xl font-bold text-[#b8963f] mt-2">{analytics.topOutfit}</h3>
+                  </div>
+
+                </div>
+              </div>
+            )}
 
             {/* CARDS */}
             <div className="px-10 py-16">
