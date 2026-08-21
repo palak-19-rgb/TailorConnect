@@ -1,0 +1,50 @@
+name: TailorConnect CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build backend Docker image
+        run: docker build -f backend/Dockerfile -t tailorconnect-backend .
+
+      - name: Build frontend Docker image
+        run: docker build -f frontend/Dockerfile -t tailorconnect-frontend ./frontend
+      - name: Prepare environment for Docker Compose validation
+        run: |
+          if [ ! -f backend/.env ]; then
+            touch backend/.env
+          fi
+
+      - name: Validate Docker Compose
+        run: docker compose config
