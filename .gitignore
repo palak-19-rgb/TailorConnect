@@ -5,3 +5,4 @@ build
 .vscode
 backend/.env
 node_modules/
+backend/result.json

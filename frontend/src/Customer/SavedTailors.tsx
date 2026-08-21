@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import API from "../api/api";
 
 
 type Tailor = {
@@ -27,11 +28,8 @@ export default function SavedTailors() {
           const email = localStorage.getItem("email");
 if (!email) return;
 
-const res = await fetch(
-  `https://tailorconnect-backend.onrender.com/customer/saved/${email}`
-);
-
-            const data = await res.json();
+            const res = await API.get(`/customer/saved/${encodeURIComponent(email)}`);
+            const data = res.data;
 
            setTailors(
   Array.isArray(data)
@@ -56,13 +54,7 @@ const res = await fetch(
            const email = localStorage.getItem("email");
 if (!email) return;
 
-await fetch("https://tailorconnect-backend.onrender.com/customer/remove-tailor", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ email, tailorId }),
-});
+await API.post("/customer/remove-tailor", { tailorId });
 
             setTailors((prev) => prev.filter((t) => t._id !== tailorId));
         } catch (err) {

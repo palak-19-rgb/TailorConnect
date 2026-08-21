@@ -1,10 +1,39 @@
 const TailorCustomer = require("../models/TailorCustomer");
 const Customer = require("../models/Customer");
+const Tailor = require("../models/Tailor");
+
+async function getAuthenticatedTailor(req, res) {
+  if (req.user.role !== "Tailor") {
+    res.status(403).json({ error: "Tailor access required" });
+    return null;
+  }
+
+  const tailor = await Tailor.findOne({ email: req.user.email }).select("_id");
+  if (!tailor) {
+    res.status(403).json({ error: "Tailor account not found" });
+    return null;
+  }
+  return tailor;
+}
+
+async function getOwnedClient(req, res, id) {
+  const tailor = await getAuthenticatedTailor(req, res);
+  if (!tailor) return null;
+
+  const client = await TailorCustomer.findOne({ _id: id, tailorId: tailor._id });
+  if (!client) {
+    res.status(404).json({ error: "Client not found" });
+    return null;
+  }
+  return client;
+}
 
 // ✅ ADD CLIENT (MAIN LOGIC)
 async function addClient(req, res) {
   try {
-    const { tailorId, phone, name, address, outfit, deliveryDate, email } = req.body;
+    const { phone, name, address, outfit, deliveryDate, email } = req.body;
+    const tailor = await getAuthenticatedTailor(req, res);
+    if (!tailor) return;
 
     if (!phone) {                                              // ✅ check upar le aaya
       return res.status(400).json({ error: "Phone required" });
@@ -14,7 +43,7 @@ async function addClient(req, res) {
     let existing = await Customer.findOne({ phone });
 
     let newClient = new TailorCustomer({
-      tailorId,
+      tailorId: tailor._id,
       phone,
       email,
       outfit,
@@ -52,9 +81,15 @@ async function addClient(req, res) {
 // ✅ GET ALL CLIENTS OF A TAILOR
 async function getClients(req, res) {
   try {
+    const tailor = await getAuthenticatedTailor(req, res);
+    if (!tailor) return;
     const { tailorId } = req.params;
 
-    const clients = await TailorCustomer.find({ tailorId });
+    if (tailor._id.toString() !== tailorId) {
+      return res.status(403).json({ error: "You can only view your own clients" });
+    }
+
+    const clients = await TailorCustomer.find({ tailorId: tailor._id });
 
     res.json(clients);
 
@@ -68,8 +103,10 @@ async function updateMeasurements(req, res) {
   try {
     const { id, measurements } = req.body;
 
+    const client = await getOwnedClient(req, res, id);
+    if (!client) return;
     const updated = await TailorCustomer.findByIdAndUpdate(
-      id,
+      client._id,
       { measurements },
       { new: true }
     );
@@ -86,7 +123,9 @@ async function deleteClient(req, res) {
   try {
     const { id } = req.body;
 
-    await TailorCustomer.findByIdAndDelete(id);
+    const client = await getOwnedClient(req, res, id);
+    if (!client) return;
+    await TailorCustomer.findByIdAndDelete(client._id);
 
     res.json({ status: true });
 
@@ -104,6 +143,10 @@ async function getCustomerOrders(req, res) {
   try {
     const { email } = req.params;
 
+    if (req.user.role !== "Customer" || req.user.email !== email) {
+      return res.status(403).json({ error: "You can only view your own orders" });
+    }
+
     const orders = await TailorCustomer.find({ email });
 
     res.json(orders);
@@ -120,9 +163,11 @@ const sendMail = require("../config/mailer");
 async function updateStatus(req, res) {
   try {
     const { id, status } = req.body;
+    const ownedOrder = await getOwnedClient(req, res, id);
+    if (!ownedOrder) return;
 
     const order = await TailorCustomer.findByIdAndUpdate(
-      id,
+      ownedOrder._id,
       { status },
       { new: true }
     );
@@ -147,8 +192,13 @@ async function updateStatus(req, res) {
 
 async function getAnalytics(req, res) {
   try {
+    const tailor = await getAuthenticatedTailor(req, res);
+    if (!tailor) return;
     const { tailorId } = req.params;
-    const orders = await TailorCustomer.find({ tailorId });
+    if (tailor._id.toString() !== tailorId) {
+      return res.status(403).json({ error: "You can only view your own analytics" });
+    }
+    const orders = await TailorCustomer.find({ tailorId: tailor._id });
 
     const totalOrders = orders.length;
     const delivered = orders.filter(o => o.status === "Delivered").length;

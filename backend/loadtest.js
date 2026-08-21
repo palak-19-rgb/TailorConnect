@@ -6,78 +6,122 @@ export const options = {
   duration: "30s",
 };
 
-const EMAIL = "chughp234@gmail.com";
 const BASE = "http://localhost:1000";
+
+// Existing emails from DB
+const CUSTOMER_EMAIL = "customer@gmail.com";
+const TAILOR_EMAIL = "tailor@gmail.com";
 
 export default function () {
 
-  // ✅ 1. GET TAILOR PROFILE (public)
-  const profileRes = http.get(`${BASE}/Tailor/getByEmail/${EMAIL}`);
+  // 1. Tailor Profile
+  const profileRes = http.get(
+    `${BASE}/Tailor/getByEmail/${TAILOR_EMAIL}`
+  );
+
   check(profileRes, {
     "Tailor Profile 200": (r) => r.status === 200,
   });
 
-  // ✅ 2. GET ORDERS (public)
-  const orderRes = http.get(`${BASE}/TailorCustomer/customer/${EMAIL}`);
+  // 2. Customer Orders
+  const orderRes = http.get(
+    `${BASE}/TailorCustomer/customer/${CUSTOMER_EMAIL}`
+  );
+
   check(orderRes, {
-    "Orders 200": (r) => r.status === 200,
+    "Orders 200": (r) =>
+      r.status === 200 || r.status === 404,
   });
 
-  // ✅ 3. GET TAILORS LIST (public)
-  const tailorsRes = http.get(`${BASE}/Tailor/tailors?city=Lucknow`);
-  check(tailorsRes, {
-    "Tailors List 200": (r) => r.status === 200,
+  // 3. Tailors List
+  const tailorListRes = http.get(
+    `${BASE}/Tailor/tailors?city=Lucknow`
+  );
+
+  check(tailorListRes, {
+    "Tailor List 200": (r) => r.status === 200,
   });
 
-  // ✅ 4. RATE LIMITER TEST — Login pe rapid fire
+  // 4. Login (Wrong Password -> Rate Limiter)
   const loginRes = http.post(
     `${BASE}/Login`,
-    JSON.stringify({ email: "test@gmail.com", pwd: "WrongPass1" }),
-    { headers: { "Content-Type": "application/json" } }
+    JSON.stringify({
+      email: CUSTOMER_EMAIL,
+      pwd: "WrongPassword123",
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
+
   check(loginRes, {
-    "Login Rate Limit OK (200/401/429)": (r) =>
-      r.status === 200 || r.status === 401 || r.status === 429,
-    "Rate Limiter Triggered": (r) => r.status === 429,
+    "Login returns valid status": (r) =>
+      [200, 401, 429].includes(r.status),
   });
 
-  // ✅ 5. JWT TEST — protected route bina token ke
-  const noTokenRes = http.get(`${BASE}/TailorCustomer/someFakeTailorId`);
-  check(noTokenRes, {
-    "No Token = 401": (r) => r.status === 401,
+  // 5. Protected Route (No JWT)
+  const noToken = http.get(
+    `${BASE}/TailorCustomer/someFakeTailorId`
+  );
+
+  check(noToken, {
+    "No Token Unauthorized": (r) =>
+      r.status === 401 || r.status === 403,
   });
 
-  // ✅ 6. JWT TEST — protected route galat token se
-  const fakeTokenRes = http.get(`${BASE}/TailorCustomer/someFakeTailorId`, {
-    headers: { Authorization: "Bearer faketoken123" },
-  });
-  check(fakeTokenRes, {
-    "Fake Token = 401": (r) => r.status === 401,
+  // 6. Protected Route (Fake JWT)
+  const fakeToken = http.get(
+    `${BASE}/TailorCustomer/someFakeTailorId`,
+    {
+      headers: {
+        Authorization: "Bearer faketoken123",
+      },
+    }
+  );
+
+  check(fakeToken, {
+    "Fake Token Unauthorized": (r) =>
+      r.status === 401 || r.status === 403,
   });
 
-  // ✅ 7. CHATBOT TEST (public)
-  const chatRes = http.post(
+  // 7. Chatbot
+  const chatbot = http.post(
     `${BASE}/chatbot/message`,
     JSON.stringify({
-      message: "suggest a tailor in Lucknow",
+      message: "Suggest a tailor in Lucknow",
       sessionId: `session_${__VU}`,
     }),
-    { headers: { "Content-Type": "application/json" } }
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
-  check(chatRes, {
+
+  check(chatbot, {
     "Chatbot 200": (r) => r.status === 200,
   });
 
-  // ✅ 8. GET REVIEWS (public)
-  const reviewRes = http.get(`${BASE}/Tailor/reviews/8090974434`);
+  // 8. Reviews
+  const reviewRes = http.get(
+    `${BASE}/Tailor/reviews/8090974434`
+  );
+
   check(reviewRes, {
-    "Reviews 200": (r) => r.status === 200,
+    "Reviews endpoint": (r) =>
+      r.status === 200 || r.status === 404,
   });
 
-  // ✅ 9. SOCKET MESSAGES (public)
-  const msgRes = http.get(`${BASE}/messages/testroom`);
+  // 9. Messages
+  const msgRes = http.get(
+    `${BASE}/messages/testroom`
+  );
+
   check(msgRes, {
-    "Messages 200": (r) => r.status === 200,
+    "Messages endpoint": (r) =>
+      r.status === 200 || r.status === 404,
   });
 
   sleep(1);

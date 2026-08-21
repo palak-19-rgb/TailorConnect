@@ -68,19 +68,29 @@ useEffect(() => {
 
   try {
     setLoading(true);
+const response = await API.post("/Login", { email, pwd });
 
-   const response = await API.post("/Login", { email, pwd });
-   console.log("LOGIN:", response.data);
+console.log("LOGIN:", response.data);
+
 const data = response.data;
-
 const role = data.role;
 
-// ✅ dynamic API
+// ✅ SAVE TOKEN IMMEDIATELY
+localStorage.setItem("token", data.token);
+localStorage.setItem("role", data.role);
+localStorage.setItem("email", data.user.email);
+
+// dynamic API
 const rolePath = role === "Customer" ? "customer" : "Tailor";
-const fullUser = await API.get(`/${rolePath}/getByEmail/${email}`);
+
+// ✅ Now token is available
+const fullUser = await API.get(
+  `/${rolePath}/getByEmail/${email}`
+);
+
 const user = fullUser.data;
 
-// 🔥 PROFILE COMPLETE CHECK
+// PROFILE COMPLETE CHECK
 const isProfileComplete = user.name && user.phone;
 
 localStorage.setItem(
@@ -89,20 +99,18 @@ localStorage.setItem(
 );
 
 localStorage.setItem("phone", fullUser.data.phone);
-    localStorage.setItem("role", data.role);
-    localStorage.setItem("email", data.user.email);
-    localStorage.setItem("token", data.token);
 
-  if (data.role === "Tailor") {
+if (data.role === "Tailor") {
   const id = data.user?._id || data.user?.id || data._id;
   localStorage.setItem("tailorId", id);
 }
 
-    if (data.role === "Customer") {
-      navigate("/CustomerDash");
-    } else {
-      navigate("/TailorDash");
-    }
+if (data.role === "Customer") {
+  navigate("/CustomerDash");
+} else {
+  navigate("/TailorDash");
+}
+  
 
   } catch (err: any) {
     setError(err.response?.data?.msg || "Invalid email or password");

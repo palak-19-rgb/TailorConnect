@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import API from "../api/api";
 function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; text: string; imageUrl?: string }[]>([]);
@@ -22,12 +22,12 @@ function Chatbot() {
     setLoading(true);
 
     try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/chatbot/message`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, sessionId }),
-      });
-     const data = await res.json();
+    const res = await API.post("/chatbot/message", {
+  message: input,
+  sessionId,
+});
+
+const data = res.data;
 setMessages((prev) => [...prev, { 
   role: "bot", 
   text: data.reply,

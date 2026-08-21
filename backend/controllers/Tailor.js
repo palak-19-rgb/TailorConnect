@@ -3,6 +3,7 @@ var UseColRef = require("../models/Tailor");
 var cloudinary = require("cloudinary").v2;
 const Tesseract = require("tesseract.js");
 const crypto = require("crypto");//aadhaar hash krdo
+const { uploadImage, withTemporaryImage } = require("../middleware/upload");
 
 
 
@@ -18,6 +19,14 @@ const SECRET_KEY = process.env.AADHAAR_SECRET_KEY;
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+function requireTailor(req, res) {
+  if (req.user.role !== "Tailor") {
+    res.status(403).json({ msg: "Tailor access required" });
+    return false;
+  }
+  return true;
+}
 async function Signup(req, resp) {
     try {
         const hashed = await bcrypt.hash(req.body.pwd, 10);
@@ -45,7 +54,9 @@ async function getTailorByEmail(req, res) {
   try {
     const { email } = req.params;
 
-    const user = await TailorModel.findOne({ email }).select("-pwd");
+    const user = await TailorModel.findOne({ email }).select(
+      "email shopName ownerName phone specializationCategory specializationType workType gender gst experience socialLink otherInfo profilePhoto shopAddress reviews portfolio"
+    );
 
     if (!user) {
       return res.status(404).json({ msg: "Tailor not found" });
@@ -66,15 +77,11 @@ const Tailor = require("../models/Tailor");
 
 async function Login(req, res) {
   const { email, pwd } = req.body;
- console.log("LOGIN REQUEST:", req.body);
   try {
     // Customer check
     let user = await Customer.findOne({ email });
-  console.log("CUSTOMER FOUND:", !!user);
     if (user) {
-        console.log("CUSTOMER HASH:", user.pwd);
       const match = await bcrypt.compare(pwd, user.pwd);
-       console.log("CUSTOMER MATCH:", match);
       if (match) {
         const userObj = user.toObject();
         delete userObj.pwd;                                              // ✅ password hataya
@@ -89,11 +96,8 @@ async function Login(req, res) {
 
     // Tailor check
     user = await Tailor.findOne({ email });
-    console.log("TAILOR FOUND:", !!user);
     if (user) {
-          console.log("TAILOR HASH:", user.pwd);
       const match = await bcrypt.compare(pwd, user.pwd);
-        console.log("TAILOR MATCH:", match);
       if (match) {
         const userObj = user.toObject();
         delete userObj.pwd;                                              // ✅ password hataya
@@ -120,36 +124,24 @@ async function Login(req, res) {
 
 async function TailorDetails(req, resp) {
     try {
-        console.log("Incoming body:", req.body);
-        console.log("Incoming files:", req.files);
-
+        if (!requireTailor(req, resp)) return;
         let profileUrl = null;
         let aadhaarUrl = null;
 
         // ✅ Profile Photo Upload
         if (req.files && req.files.profilePhoto) {
-            let file = req.files.profilePhoto;
-            let fileName = Date.now() + "_" + file.name;
-
-            let uploadPath = path.join(__dirname, "..", "uploads", fileName);
-            await file.mv(uploadPath);
-
-            let result = await cloudinary.uploader.upload(uploadPath);
+            let result = await uploadImage(req.files.profilePhoto, cloudinary, "tailorconnect/profiles");
             profileUrl = result.secure_url;
         }
 
         // ✅ Aadhaar Photo Upload
         if (req.files && req.files.aadhaarPhoto) {
-            let file = req.files.aadhaarPhoto;
-            let fileName = Date.now() + "_aadhaar_" + file.name;
-
-            let uploadPath = path.join(__dirname, "..", "uploads", fileName);
-            await file.mv(uploadPath);
-
-            let result = await cloudinary.uploader.upload(uploadPath);
+            let result = await uploadImage(req.files.aadhaarPhoto, cloudinary, "tailorconnect/aadhaar");
             aadhaarUrl = result.secure_url;
         }
 
+      // The authenticated token, not a client-provided email, determines the record.
+      req.body.email = req.user.email;
       let doc = await UseColRef.findOneAndUpdate(
   { email: req.body.email },   // ⭐ SAME USER
   {
@@ -188,8 +180,7 @@ async function TailorDetails(req, resp) {
         });
 
     } catch (err) {
-        console.log("ERROR:", err);
-        resp.status(500).json({ status: false, msg: err.message });
+        resp.status(err.statusCode || 500).json({ status: false, msg: err.message });
     }
 }
 
@@ -200,20 +191,16 @@ async function TailorDetails(req, resp) {
 async function doExtractAadhaar(req, resp) {
 
     try {
+        if (!requireTailor(req, resp)) return;
         if (!req.files || !req.files.aadhaarPhoto) {
             return resp.status(400).json({ status: false, msg: "No file uploaded" });
         }
 
-        let file = req.files.aadhaarPhoto;
-        let fileName = Date.now() + "_" + file.name;
-        let uploadPath = path.join(__dirname, "..", "uploads", fileName);
-
-        await file.mv(uploadPath);
-
-        const result = await Tesseract.recognize(uploadPath, "eng");
+        const result = await withTemporaryImage(
+          req.files.aadhaarPhoto,
+          (tempPath) => Tesseract.recognize(tempPath, "eng")
+        );
         let text = result.data.text;
-
-        console.log("OCR TEXT:", text);
 
         // Aadhaar Pattern (12 digits)
         let aadhaarMatch = text.match(/\d{4}\s?\d{4}\s?\d{4}/);
@@ -241,8 +228,7 @@ async function doExtractAadhaar(req, resp) {
         });
 
     } catch (err) {
-        console.log("OCR ERROR:", err);
-        resp.status(500).json({ status: false, msg: err.message });
+        resp.status(err.statusCode || 500).json({ status: false, msg: err.message });
     }
 }
 
@@ -300,8 +286,16 @@ async function getTailorProfile(req, resp) {
 async function addReview(req, res) {
 
   try {
+    if (req.user.role !== "Customer") {
+      return res.status(403).json({ msg: "Customer access required" });
+    }
 
     const { mobile, rating, review } = req.body;
+
+    const customer = await Customer.findOne({ email: req.user.email }).select("name email");
+    if (!customer) {
+      return res.status(403).json({ msg: "Customer account not found" });
+    }
 
     const tailor = await UseColRef.findOne({ phone: mobile });
 
@@ -309,7 +303,7 @@ async function addReview(req, res) {
       return res.status(404).json({ msg: "Tailor not found" });
 
     tailor.reviews.push({
-      customerName: "Customer",
+      customerName: customer.name || customer.email,
       rating: rating,
       review: review
     });
@@ -365,7 +359,7 @@ filter.workType = workType
 }
 
 
-const tailors = await UseColRef.find(filter).select("-pwd")
+const tailors = await UseColRef.find(filter).select("email shopName ownerName phone specializationCategory specializationType workType gender gst experience socialLink otherInfo profilePhoto shopAddress reviews portfolio")
 
 // 👇 Important check
 if(tailors.length === 0){
@@ -385,19 +379,14 @@ res.status(500).json({error:err.message})
 // ADD PORTFOLIO IMAGE
 async function addPortfolio(req, res) {
   try {
-    const { email } = req.body;
+    if (!requireTailor(req, res)) return;
+    const email = req.user.email;
 
     if (!req.files || !req.files.image) {
       return res.json({ status: false, msg: "No image uploaded" });
     }
 
-    let file = req.files.image;
-    let fileName = Date.now() + "_" + file.name;
-    let uploadPath = path.join(__dirname, "..", "uploads", fileName);
-
-    await file.mv(uploadPath);
-
-    let result = await cloudinary.uploader.upload(uploadPath);
+    let result = await uploadImage(req.files.image, cloudinary, "tailorconnect/portfolio");
 
     const tailor = await UseColRef.findOne({ email });
 
@@ -420,7 +409,7 @@ async function addPortfolio(req, res) {
     res.json({ status: true, msg: "Portfolio Added" });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 }
 
@@ -443,6 +432,8 @@ async function getPortfolio(req, res) {
 // DELETE PORTFOLIO IMAGE
 async function deletePortfolio(req, res) {
   try {
+    if (!requireTailor(req, res)) return;
+    req.body.email = req.user.email;
     const { email, imageId } = req.body;
 
     const tailor = await UseColRef.findOne({ email });
@@ -479,6 +470,8 @@ async function deletePortfolio(req, res) {
 
 async function updatePortfolio(req, res) {
   try {
+    if (!requireTailor(req, res)) return;
+    req.body.email = req.user.email;
     const { email, images } = req.body;   // ✅ yaha se aayega data
 
     const tailor = await UseColRef.findOne({ email });
@@ -502,6 +495,8 @@ async function updatePortfolio(req, res) {
 
 async function updateSingleImage(req, res) {
   try {
+    if (!requireTailor(req, res)) return;
+    req.body.email = req.user.email;
     const { email, image } = req.body;
 
     const tailor = await UseColRef.findOne({ email });
@@ -530,7 +525,7 @@ async function getFullTailorProfile(req, res) {
   try {
     const { id } = req.params;
 
-    const tailor = await UseColRef.findById(id).select("-pwd");
+    const tailor = await UseColRef.findById(id).select("email shopName ownerName phone specializationCategory specializationType workType gender gst experience socialLink otherInfo profilePhoto shopAddress reviews portfolio");
 
     if (!tailor) {
       return res.status(404).json({

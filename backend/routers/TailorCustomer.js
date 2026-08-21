@@ -5,7 +5,7 @@ const verifyToken = require("../middleware/auth");
 
 
 router.post("/add", verifyToken, ctrl.addClient);                      // 🔒 protected
-router.get("/customer/:email", ctrl.getCustomerOrders);                // public
+router.get("/customer/:email", verifyToken, ctrl.getCustomerOrders);
 router.get("/analytics/:tailorId", verifyToken, ctrl.getAnalytics);    // 🔥 YE UPAR LE AAYA
 router.get("/:tailorId", verifyToken, ctrl.getClients);                // 🔒 protected
 router.post("/update-measurements", verifyToken, ctrl.updateMeasurements);

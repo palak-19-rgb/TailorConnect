@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API from "../api/api";
 
 interface Review {
   _id: string;
@@ -74,7 +75,7 @@ const RateAndReview: React.FC = () => {
   }
 
   try {
-    const res = await axios.post(`${API_BASE}/Tailor/addReview`, {
+    const res = await API.post("/Tailor/addReview", {
       mobile,
       rating,
       review: reviewText,

@@ -1,6 +1,7 @@
 var path = require("path");
 var UseColRef = require("../models/Customer"); 
 var cloudinary = require("cloudinary").v2;
+const { uploadImage } = require("../middleware/upload");
 
 
 
@@ -42,6 +43,10 @@ async function getCustomerByEmail(req, res) {
   try {
     const { email } = req.params;
 
+    if (req.user.email !== email) {
+      return res.status(403).json({ msg: "You can only view your own profile" });
+    }
+
     const user = await UseColRef.findOne({ email }).select("-pwd");
 
     if (!user) {
@@ -60,23 +65,12 @@ async function getCustomerByEmail(req, res) {
 
 async function CustomerDetails(req, resp) {
     try {
-        console.log("Incoming body:", req.body);
-        console.log("Incoming files:", req.files);
-
         let imageUrl = null;
 
         // ✅ SAFE FILE CHECK
         if (req.files && req.files.profilepic) {
 
-            let file = req.files.profilepic;
-            let fileName = Date.now() + "_" + file.name;
-
-            let uploadPath = path.join(__dirname, "..", "uploads", fileName);
-
-            await file.mv(uploadPath);
-
-            let result = await cloudinary.uploader.upload(uploadPath);
-            console.log("Cloudinary URL:", result.secure_url);
+            let result = await uploadImage(req.files.profilepic, cloudinary, "tailorconnect/customer-profiles");
 
             imageUrl = result.secure_url;
         }
@@ -102,12 +96,10 @@ if (imageUrl) {
 }
 
 let doc = await UseColRef.findOneAndUpdate(
-  { email: req.body.email },
+  { email: req.user.email },
   updateData,
   { new: true }
 );
-        console.log("Saved in MongoDB:", doc);
-
         resp.status(200).json({
             status: true,
             msg: "record saved",
@@ -115,8 +107,7 @@ let doc = await UseColRef.findOneAndUpdate(
         });
 
     } catch (err) {
-        console.log("ERROR:", err);
-        resp.status(500).json({ status: false, msg: err.message });
+        resp.status(err.statusCode || 500).json({ status: false, msg: err.message });
     }
 }
 
@@ -124,16 +115,13 @@ let doc = await UseColRef.findOneAndUpdate(
 
 async function checkCustomer(req, res) {
   try {
-   const { email } = req.params;
-const customer = await UseColRef.findOne({ email }).select("-pwd");
-    if (!customer) {
-      return res.json({ exists: false });
+   if (req.user.role !== "Tailor") {
+      return res.status(403).json({ msg: "Tailor access required" });
     }
 
-    res.json({
-      exists: true,
-      customer: customer
-    });
+    const { phone } = req.params;
+    const customer = await UseColRef.findOne({ phone }).select("name address");
+    res.json({ exists: Boolean(customer), customer: customer || undefined });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -144,15 +132,17 @@ const customer = await UseColRef.findOne({ email }).select("-pwd");
 async function getSavedTailors(req, res) {
   try {
     const { email } = req.params;
+    if (req.user.role !== "Customer" || req.user.email !== email) {
+      return res.status(403).json({ msg: "You can only view your saved tailors" });
+    }
 
-   const customer = await UseColRef.findOne({ email })
+   const customer = await UseColRef.findOne({ email: req.user.email })
   .select("-pwd")                         
   .populate({
     path: "savedTailors",
     model: "Tailor",
-    select: "-pwd"                        
+    select: "email shopName ownerName phone specializationCategory specializationType workType gender gst experience socialLink otherInfo profilePhoto shopAddress reviews portfolio"
   });
-    console.log("POPULATED:", customer?.savedTailors);
 
     if (!customer) return res.json([]);
 
@@ -166,8 +156,8 @@ async function getSavedTailors(req, res) {
 
 async function saveTailor(req, res) {
   try {
-const { email, tailorId } = req.body;
-const customer = await UseColRef.findOne({ email });
+const { tailorId } = req.body;
+const customer = await UseColRef.findOne({ email: req.user.email });
 
     if (!customer) {
       return res.status(404).json({ msg: "Customer not found" });
@@ -189,8 +179,8 @@ const customer = await UseColRef.findOne({ email });
 
 async function removeTailor(req, res) {
   try {
-   const { email, tailorId } = req.body;
-const customer = await UseColRef.findOne({ email });
+   const { tailorId } = req.body;
+const customer = await UseColRef.findOne({ email: req.user.email });
 
     if (!customer) {
       return res.status(404).json({ msg: "Customer not found" });

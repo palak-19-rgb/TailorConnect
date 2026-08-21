@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import API from "../api/api";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -13,10 +14,8 @@ export default function MyOrders() {
 
 if (!email) return;
 
-const res = await fetch(
-  `https://tailorconnect-backend.onrender.com/TailorCustomer/customer/${email}`
-);
-    const data = await res.json();
+    const res = await API.get(`/TailorCustomer/customer/${encodeURIComponent(email)}`);
+    const data = res.data;
 
     setOrders(data || []);
   };

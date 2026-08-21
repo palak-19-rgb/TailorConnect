@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import API from "../api/api";
 
 type Customer = {
   _id: string;
@@ -172,11 +173,8 @@ const res = await fetch("https://tailorconnect-backend.onrender.com/TailorCustom
   const handlePhoneBlur = async () => {
     if (mode !== "existing" || !form.phone) return;
 
-    const res = await fetch(
-      `https://tailorconnect-backend.onrender.com/Customer/check/${form.phone}`
-    );
-
-    const data = await res.json();
+    const res = await API.get(`/Customer/check/${encodeURIComponent(form.phone)}`);
+    const data = res.data;
 
     if (data.exists) {
       setForm(prev => ({
