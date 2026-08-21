@@ -11,7 +11,9 @@
 ![Groq](https://img.shields.io/badge/Groq-Llama%203.3-blue)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-4285F4)
 ![K6](https://img.shields.io/badge/K6-7D64FF)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 </p>
 
 > **An AI-powered production-ready MERN platform connecting customers with local tailors through intelligent discovery, secure identity verification, real-time communication, and complete order lifecycle management.**
@@ -61,6 +63,9 @@ The project also emphasizes production engineering practices including API secur
 - 🔄 Browser back-button logout protection
 - ⏳ Profile lock after save with edit mode and 10-minute idle auto logout
 - 📊 K6 load tested with concurrent users and WebSocket clients
+- 🐳 Dockerized frontend and backend with Docker Compose
+- ⚙️ Automated CI/CD pipeline using GitHub Actions
+- 🔄 Continuous frontend build validation and backend syntax checks on every push and pull request
 - 🌍 Fully deployed using Vercel + Render + MongoDB Atlas
 ---
 # 📊 Engineering Highlights
@@ -81,6 +86,8 @@ The project also emphasizes production engineering practices including API secur
 | Voice Measurements | Web Speech API (en-IN) + regex parser for hands-free 6-field measurement capture |
 | Business Analytics | Recharts Pie chart with order breakdown, monthly count, top outfit tracking |
 | AI Measurement Suggest | Groq LLaMA 3.3 estimates chest/waist/hip from height/weight with disclaimer |
+| Containerization | Dockerfiles for frontend and backend with Docker Compose orchestration |
+| CI/CD | GitHub Actions workflow for automated frontend build and backend validation |
 ---
 # 🏛 System Architecture
 ```text
@@ -205,6 +212,38 @@ Rate Limiting     : 429 Verified
 Request Failure   : 0%
 ```
 The testing validated stable API behavior, correct JWT protection, successful rate limiting, and reliable WebSocket communication under concurrent load.
+
+
+
+# ⚙️ DevOps & CI/CD
+
+TailorConnect follows modern development practices with automated validation and containerization.
+
+## 🔄 Continuous Integration
+
+A GitHub Actions workflow automatically runs on pushes and pull requests to validate the application.
+
+The CI pipeline includes:
+
+- Frontend dependency installation
+- TypeScript compilation
+- Production build validation using Vite
+- Backend JavaScript syntax validation
+
+This helps detect build and syntax issues before deployment.
+
+## 🐳 Docker Containerization
+
+The project includes Docker configuration for containerized development and deployment.
+
+- Separate Dockerfiles for the frontend and backend
+- Docker Compose for multi-container orchestration
+- `.dockerignore` to reduce unnecessary build context
+
+The application can be containerized using:
+
+```bash
+docker compose up --build
 ---
 # 📸 Application Screenshots
 
@@ -304,13 +343,17 @@ The testing validated stable API behavior, correct JWT protection, successful ra
 - Render
 ---
 # 📂 Project Structure
+
 ```text
 TailorConnect
 │
+├── .github
+│   └── workflows
+│       └── ci.yml
+│
 ├── frontend
-│   │
+│   ├── Dockerfile
 │   ├── src
-│   │   │
 │   │   ├── api
 │   │   ├── auth
 │   │   ├── components
@@ -319,25 +362,38 @@ TailorConnect
 │   │   ├── pages
 │   │   ├── context
 │   │   └── assets
-│   │
 │   ├── public
 │   └── package.json
 │
 ├── backend
-│   │
+│   ├── Dockerfile
 │   ├── config
 │   ├── controllers
 │   ├── middleware
+│   │   └── upload.js
 │   ├── models
+│   │   └── FashionKnowledge.js
 │   ├── routers
+│   ├── services
+│   │   ├── embeddingService.js
+│   │   └── ragService.js
+│   ├── data
+│   │   └── fashionKnowledge.js
+│   ├── scripts
+│   │   ├── seedFashionKnowledge.js
+│   │   └── testRag.js
 │   ├── uploads
 │   ├── loadtest.js
-│   ├── websocket-test.js
 │   ├── server.js
 │   └── package.json
 │
+├── .dockerignore
+├── docker-compose.yml
+├── package.json
+├── .gitignore
 └── README.md
-```
+
+
 # ⚙ Local Setup
 ## 1️⃣ Clone Repository
 ```bash
@@ -503,9 +559,6 @@ Rate Limiting
 ---
 
 # 🚀 Future Improvements
-
-- CI/CD pipeline using GitHub Actions
-- Docker containerization
 - Kubernetes deployment
 - Redis caching
 - Push Notifications
